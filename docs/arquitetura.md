@@ -1,75 +1,62 @@
-# Arquitetura
+# Arquitetura do Sistema — MEDCHECK (MedIA)
+## Projeto Integrado de POO (AV03) & Requisitos Clínicos 2026.2
 
-O projeto segue MVT, com as regras de negócio concentradas na camada de service. O motivo dessa decisão está na [ADR 0001](adr/0001-mvt-com-camada-de-service.md).
+---
 
-## Fluxo de uma requisição
+### 1. Visão Geral da Arquitetura
+O MEDCHECK é construído em uma arquitetura em camadas combinando **Java 25** no Core de Domínio e Motor Clínico (garantindo excelência na aplicação dos 4 Pilares de Orientação a Objetos) e **Node.js v24** na camada de BFF (Backend for Frontend), Gateway Conversacional com IA e apresentação Web responsiva (WCAG 2.1).
 
 ```mermaid
-flowchart LR
-    Requisicao([Requisição]) --> URL
-    URL --> View
-    View -->|valida a entrada| Form
-    View -->|chama| Service
-    Service --> Model[Model / ORM]
-    View -->|renderiza| Template
-    View -->|redireciona| Redirect[Redirect]
-    Template --> Resposta([Resposta])
-    Redirect --> Resposta
+graph TD
+    User([Navegador do Usuário / Web]) <--> NodeServer[Node.js BFF & Servidor Web - Porta 3000]
+    
+    subgraph Camada Node.js
+        NodeServer --> ChatIA[Orquestrador Diálogo MedIA - RF004]
+        ChatIA --> Anonymizer[Sanitizador de PII - RS004 / RNF18]
+        NodeServer --> StaticUI[Páginas Web HTML5 / Tailwind / WCAG 2.1]
+    end
+
+    NodeServer <-->|REST HTTP / JSON| JavaAPI[Servidor REST Java Core - Porta 8080]
+
+    subgraph Camada Java - 4 Pilares de POO
+        JavaAPI --> ClinicaService[ClinicaService]
+        JavaAPI --> ReceitaService[ReceitaService]
+        JavaAPI --> AuthService[AuthService]
+        
+        ClinicaService --> MotorManchester[MotorClassificacaoManchester - Strategy]
+        MotorManchester --> Classificadores["IClassificadorManchester (Polimorfismo)"]
+        ReceitaService --> ValidadorAlergia["Verificador Anti-Alergia (RS007)"]
+        
+        ClinicaService --> DomainModels["Entidades de Domínio (Herança & Encapsulamento)"]
+        DomainModels --> DataStore[MedCheckDataStore & Persistência Relacional]
+    end
+
+    DataStore <--> DB[(Banco de Dados Relacional - SQL)]
 ```
 
-## Views (`<app>/views/`)
+---
 
-- Toda view é uma classe que herda diretamente de `django.views.View`.
-- Implemente apenas os métodos HTTP necessários (`get`, `post`).
-- Mixins de controle de acesso, como `LoginRequiredMixin`, são permitidos.
-- Não use views baseadas em função nem generic views (`ListView`, `CreateView` etc.).
-- A view só recebe a requisição, chama o service e retorna a resposta (template ou redirect).
-- A view não contém regra de negócio nem acessa o ORM diretamente. Por isso, não usa `get_object_or_404`.
-- `login()` e `logout()` são chamados na view, pois alteram a sessão HTTP e precisam de `request` ([ADR 0002](adr/0002-modelo-de-usuario-customizado.md)).
+### 2. Mapeamento dos 4 Pilares de POO em Java (60% da Avaliação AV03)
 
-## Forms (`<app>/forms/`)
+| Pilar de POO | Aplicação Concreta no Código Java do MEDCHECK |
+| :--- | :--- |
+| **1. Abstração** | • Classe abstrata base `Usuario` definindo contratos essenciais e o método abstrato `obterDescricaoPerfil()`.<br>• Subclasse abstrata intermediária `ProfissionalSaude` abstraindo conselhos profissionais.<br>• Interface `IClassificadorManchester` abstraindo a avaliação de árvores clínicas determinísticas. |
+| **2. Encapsulamento** | • Todos os atributos das entidades são `private`, com acesso controlado por métodos de negócio.<br>• **Value Object `CPF`**: validação de 11 dígitos, cálculo dos dígitos verificadores e imutabilidade estrita [RS001].<br>• **Value Object `SinaisVitais`**: métodos semânticos para identificação de gravidade (`isFebreAlta()`, `isDessaturandoCritico()`, `isCriseHipertensiva()`).<br>• **Value Object `ItemReceita`**: encapsula dados posológicos e princípio ativo para prevenção de reações adversas. |
+| **3. Herança** | • Hierarquia de Usuários:<br>&nbsp;&nbsp;`Usuario` (abstrato) $\rightarrow$ `Paciente`<br>&nbsp;&nbsp;`Usuario` (abstrato) $\rightarrow$ `ProfissionalSaude` (abstrato) $\rightarrow$ `Medico`, `Enfermeiro`.<br>• Reuso de atributos de auditoria, autenticação e identificação comum a todos os atores do sistema. |
+| **4. Polimorfismo** | • **Strategy Pattern do Protocolo de Manchester:**<br>&nbsp;&nbsp;Interface `IClassificadorManchester` com implementações polimórficas:<br>&nbsp;&nbsp;1. `ClassificadorDorToracica` (Protocolo Manchester cardiovascular)<br>&nbsp;&nbsp;2. `ClassificadorDispneia` (Protocolo respiratório/hipóxia)<br>&nbsp;&nbsp;3. `ClassificadorCefaleia` (Protocolo neurológico/meníngeo)<br>&nbsp;&nbsp;4. `ClassificadorGeral` (Fallback clínico)<br>• O `MotorClassificacaoManchester` seleciona e executa a estratégia polimórfica dinamicamente em tempo de execução com base na queixa do paciente. |
 
-- Validam o formato da entrada e renderizam os campos.
-- A gravação é feita pelo service, sem `form.save()`.
+---
 
-## Services (`<app>/services/`)
+### 3. Separação Arquitetural entre IA e Motor Clínico [RNF13]
+Conforme estipulado no Documento de Requisitos e normas do Conselho Federal de Medicina (CFM):
+- A **IA Conversacional** (executada no Node.js) atua exclusivamente como facilitadora de acolhimento e coleta de sintomas em linguagem natural acessível.
+- A **Classificação de Risco (Manchester)** e o tempo-alvo são processados de forma 100% determinística pelo motor em Java, garantindo auditabilidade e previsibilidade clínica.
+- A IA possui **bloqueio arquitetural absoluto de emissão de receitas ou atestados [RS002 / RNF14]**.
 
-- Toda regra de negócio fica aqui, incluindo validações de negócio e consultas ao ORM.
-- Services não recebem `request` nem retornam `HttpResponse`.
-- Falhas são comunicadas por exceções de domínio (`<app>/exceptions.py`), que a view converte em respostas HTTP.
+---
 
-## Models (`<app>/models/`)
-
-- Definem campos, relacionamentos e metadados, sem regra de negócio.
-
-## Templates
-
-- Cuidam apenas da apresentação, sem lógica de negócio.
-
-## Admin
-
-- O Admin não deve ignorar as regras dos services: suas ações chamam os services, e a escrita fica bloqueada nos models cujas regras dependem deles.
-
-## Exemplos
-
-Leitura:
-
-```python
-class PostListView(View):
-    def get(self, request):
-        posts = PostService.listar_publicados()
-        return render(request, "posts/lista.html", {"posts": posts})
-```
-
-Alteração, com a exceção de domínio convertida em resposta HTTP:
-
-```python
-class PostPublicarView(LoginRequiredMixin, View):
-    def post(self, request, post_id):
-        try:
-            PostService.publicar(post_id, request.user)
-        except PostNaoEncontrado as exc:
-            raise Http404 from exc
-        messages.success(request, "Post publicado.")
-        return redirect("posts:painel")
-```
+### 4. Camada de Persistência e Banco de Dados (10% da Avaliação AV03)
+- Esquema relacional estruturado em `database/schema.sql` (12 tabelas normalizadas).
+- Dados de inicialização e homologação em `database/seed.sql`.
+- Repositório `MedCheckDataStore` com integridade referencial, concorrência segura (`ConcurrentHashMap`) e persistência.
+- Trilha de Auditoria imutável [RF032 / RS006] registrando módulo, operação, IP e timestamp de cada transação clínica.

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEDCHECK - Pacientes & Histórico Longitudinal</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <a href="/" class="brand">
+                <div class="brand-logo">M+</div>
+                <div class="brand-text">
+                    <h1>MEDCHECK</h1>
+                    <span>Triagem Médica com Inteligência Artificial</span>
+                </div>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="/">📊 Dashboard</a></li>
+                    <li><a href="/triagem.html">💬 Triagem com IA</a></li>
+                    <li><a href="/fila-medica.html">🩺 Fila & Teleconsulta</a></li>
+                    <li><a href="/receita.html">💊 Receita & QR Code</a></li>
+                    <li><a href="/pacientes.html" class="active">👤 Pacientes</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="grid grid-cols-3">
+            <!-- Formulário de Cadastro Único de Paciente [RF001 / RF002] -->
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Novo Paciente [RF001]</h3>
+                    </div>
+                    <form id="form-paciente" onsubmit="cadastrarPaciente(event)">
+                        <div class="form-group">
+                            <label>Nome Completo:</label>
+                            <input type="text" id="cad-nome" required placeholder="Ex: João da Silva">
+                        </div>
+                        <div class="form-group">
+                            <label>CPF (Chave Única e Imutável [RS001]):</label>
+                            <input type="text" id="cad-cpf" required placeholder="000.000.000-00">
+                        </div>
+                        <div class="form-group">
+                            <label>E-mail:</label>
+                            <input type="email" id="cad-email" required placeholder="email@exemplo.com">
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <div class="form-group" style="flex: 1;">
+                                <label>Nascimento:</label>
+                                <input type="date" id="cad-data" required>
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label>Sexo:</label>
+                                <select id="cad-sexo">
+                                    <option value="Feminino">Feminino</option>
+                                    <option value="Masculino">Masculino</option>
+                                    <option value="Outro">Outro</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <div class="form-group" style="flex: 1;">
+                                <label>Peso (kg):</label>
+                                <input type="number" id="cad-peso" step="0.1" value="70.0">
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label>Altura (m):</label>
+                                <input type="number" id="cad-altura" step="0.01" value="1.70">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Alergias Conhecidas [RF030]:</label>
+                            <input type="text" id="cad-alergias" placeholder="Ex: Dipirona, Penicilina">
+                        </div>
+                        <div class="form-group">
+                            <label>Doenças Crônicas / Histórico Familiar:</label>
+                            <textarea id="cad-doencas" rows="2" placeholder="Hipertensão, Diabetes, etc."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Cadastrar Paciente</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Listagem e Histórico Longitudinal [RF009] -->
+            <div style="grid-column: span 2;">
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <div class="card-header">
+                        <h3 class="card-title">Pacientes Cadastrados</h3>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">Clique para ver o Prontuário Longitudinal</span>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>CPF</th>
+                                <th>Idade</th>
+                                <th>Alergias</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-pacientes">
+                            <tr><td colspan="5" style="text-align: center;">Carregando pacientes...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Painel do Histórico Longitudinal Selecionado [RF009] -->
+                <div class="card" id="painel-longitudinal" style="display: none;">
+                    <div class="card-header">
+                        <h3 class="card-title" id="titulo-longitudinal">Histórico Clínico Longitudinal [RF009]</h3>
+                    </div>
+                    <div id="conteudo-longitudinal">
+                        <!-- Linha do tempo das triagens e receitas -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        MEDCHECK (MedIA) • Cadastro Único com CPF Imutável [RS001] • Histórico Longitudinal [RF009]
+    </footer>
+
+    <script>
+        async function carregarPacientes() {
+            try {
+                const res = await fetch('/api/pacientes');
+                const pacientes = await res.json();
+                const tbody = document.getElementById('tabela-pacientes');
+                tbody.innerHTML = '';
+                pacientes.forEach(p => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${p.nome}</strong></td>
+                        <td>${p.cpf}</td>
+                        <td>${p.idade} anos</td>
+                        <td><span style="color: #dc2626; font-size: 0.8rem; font-weight: 600;">${p.alergias || 'Nenhuma'}</span></td>
+                        <td>
+                            <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;" onclick="verHistorico(${p.id})">
+                                📂 Prontuário
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function cadastrarPaciente(e) {
+            e.preventDefault();
+            const payload = {
+                nome: document.getElementById('cad-nome').value,
+                cpf: document.getElementById('cad-cpf').value,
+                email: document.getElementById('cad-email').value,
+                dataNascimento: document.getElementById('cad-data').value,
+                sexo: document.getElementById('cad-sexo').value,
+                peso: document.getElementById('cad-peso').value,
+                altura: document.getElementById('cad-altura').value,
+                alergias: document.getElementById('cad-alergias').value,
+                doencasCronicas: document.getElementById('cad-doencas').value
+            };
+
+            const res = await fetch('/api/pacientes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            if (data.sucesso) {
+                alert(data.mensagem);
+                document.getElementById('form-paciente').reset();
+                carregarPacientes();
+            } else {
+                alert('Erro ao cadastrar: ' + data.erro);
+            }
+        }
+
+        async function verHistorico(pacienteId) {
+            const res = await fetch(`/api/pacientes/${pacienteId}/historico`);
+            const dados = await res.json();
+
+            const painel = document.getElementById('painel-longitudinal');
+            const conteudo = document.getElementById('conteudo-longitudinal');
+            painel.style.display = 'block';
+
+            let triagensHtml = '';
+            if (dados.triagens && dados.triagens.length > 0) {
+                dados.triagens.forEach(t => {
+                    triagensHtml += `
+                        <div style="border-left: 4px solid var(--primary); padding-left: 0.75rem; margin-bottom: 0.75rem;">
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">${new Date(t.data).toLocaleString('pt-BR')}</div>
+                            <strong>Queixa:</strong> ${t.queixa} &nbsp;
+                            <span class="badge-manchester badge-${t.corManchester}" style="font-size: 0.7rem; padding: 2px 6px;">${t.prioridadeRotulo}</span>
+                            <p style="font-size: 0.85rem; margin-top: 0.25rem;">${t.resumo}</p>
+                        </div>
+                    `;
+                });
+            } else {
+                triagensHtml = '<p style="font-size:0.85rem; color:var(--text-muted);">Nenhuma triagem registrada.</p>';
+            }
+
+            let receitasHtml = '';
+            if (dados.receitas && dados.receitas.length > 0) {
+                dados.receitas.forEach(r => {
+                    const itensStr = r.itens.map(i => `${i.medicamento} (${i.posologia})`).join(', ');
+                    receitasHtml += `
+                        <div style="border-left: 4px solid #7c3aed; padding-left: 0.75rem; margin-bottom: 0.75rem;">
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">${new Date(r.data).toLocaleString('pt-BR')} • Hash: ${r.hash}</div>
+                            <strong>Prescrição:</strong> ${itensStr}
+                        </div>
+                    `;
+                });
+            } else {
+                receitasHtml = '<p style="font-size:0.85rem; color:var(--text-muted);">Nenhuma receita emitida.</p>';
+            }
+
+            conteudo.innerHTML = `
+                <div style="margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);">
+                    <h4 style="color: var(--primary);">${dados.paciente.nome} (${dados.paciente.idade} anos)</h4>
+                    <span style="font-size: 0.85rem;"><strong>Alergias:</strong> ${dados.paciente.alergias || 'Nenhuma'}</span> |
+                    <span style="font-size: 0.85rem;"><strong>Condições:</strong> ${dados.paciente.doencasCronicas || 'Nenhuma'}</span>
+                </div>
+
+                <h5 style="margin-bottom: 0.5rem;">Sessões de Triagem Realizadas:</h5>
+                ${triagensHtml}
+
+                <h5 style="margin-top: 1rem; margin-bottom: 0.5rem;">Prescrições Médicas Emitidas:</h5>
+                ${receitasHtml}
+            `;
+        }
+
+        window.onload = carregarPacientes;
+    </script>
+</body>
+</html>

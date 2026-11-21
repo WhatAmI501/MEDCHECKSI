@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEDCHECK (MedIA) - Painel Geral e Indicadores</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <a href="/" class="brand">
+                <div class="brand-logo">M+</div>
+                <div class="brand-text">
+                    <h1>MEDCHECK</h1>
+                    <span>Triagem Médica com Inteligência Artificial</span>
+                </div>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="/" class="active">📊 Dashboard</a></li>
+                    <li><a href="/triagem.html">💬 Triagem com IA</a></li>
+                    <li><a href="/fila-medica.html">🩺 Fila & Teleconsulta</a></li>
+                    <li><a href="/receita.html">💊 Receita & QR Code</a></li>
+                    <li><a href="/pacientes.html">👤 Pacientes</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white;">
+            <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Sistema de Triagem Médica Integrada com IA & Manchester</h2>
+            <p style="opacity: 0.95; line-height: 1.5;">
+                Plataforma de orientação clínica baseada na árvore determinística do Protocolo de Manchester (RNF13)
+                com suporte aos 4 Pilares de Orientação a Objetos em Java e interface Node.JS.
+            </p>
+        </div>
+
+        <!-- Indicadores Rápidos -->
+        <div class="grid grid-cols-4" style="margin-bottom: 1.5rem;">
+            <div class="card">
+                <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">TOTAL DE TRIAGENS</span>
+                <h3 id="stat-triagens" style="font-size: 2rem; color: var(--primary); margin-top: 0.25rem;">-</h3>
+            </div>
+            <div class="card">
+                <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">PACIENTES ATENDIDOS</span>
+                <h3 id="stat-pacientes" style="font-size: 2rem; color: #059669; margin-top: 0.25rem;">-</h3>
+            </div>
+            <div class="card">
+                <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">RECEITAS EMITIDAS</span>
+                <h3 id="stat-receitas" style="font-size: 2rem; color: #7c3aed; margin-top: 0.25rem;">-</h3>
+            </div>
+            <div class="card">
+                <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">EM ATENDIMENTO REMOTO</span>
+                <h3 id="stat-atendimentos" style="font-size: 2rem; color: #ea580c; margin-top: 0.25rem;">-</h3>
+            </div>
+        </div>
+
+        <!-- Distribuição por Gravidade do Protocolo de Manchester -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <div class="card-header">
+                <h3 class="card-title">Casos por Classificação de Manchester [RF012 / RNF04]</h3>
+                <span style="font-size: 0.85rem; color: var(--text-muted);">Tempo-alvo e gravidade clínica</span>
+            </div>
+            <div class="grid grid-cols-5" id="manchester-cards">
+                <div class="card" style="border-left: 6px solid var(--manchester-vermelho); background: #fff5f5;">
+                    <div style="font-weight: 700; color: var(--manchester-vermelho);">🔴 VERMELHO</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">Emergência (0 min)</div>
+                    <div id="count-vermelho" style="font-size: 1.75rem; font-weight: 700; margin-top: 0.5rem;">0</div>
+                </div>
+                <div class="card" style="border-left: 6px solid var(--manchester-laranja); background: #fffaf0;">
+                    <div style="font-weight: 700; color: var(--manchester-laranja);">🟠 LARANJA</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">Muito Urgente (10 min)</div>
+                    <div id="count-laranja" style="font-size: 1.75rem; font-weight: 700; margin-top: 0.5rem;">0</div>
+                </div>
+                <div class="card" style="border-left: 6px solid var(--manchester-amarelo); background: #fefce8;">
+                    <div style="font-weight: 700; color: var(--manchester-amarelo);">🟡 AMARELO</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">Urgente (50 min)</div>
+                    <div id="count-amarelo" style="font-size: 1.75rem; font-weight: 700; margin-top: 0.5rem;">0</div>
+                </div>
+                <div class="card" style="border-left: 6px solid var(--manchester-verde); background: #f0fdf4;">
+                    <div style="font-weight: 700; color: var(--manchester-verde);">🟢 VERDE</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">Pouco Urgente (120 min)</div>
+                    <div id="count-verde" style="font-size: 1.75rem; font-weight: 700; margin-top: 0.5rem;">0</div>
+                </div>
+                <div class="card" style="border-left: 6px solid var(--manchester-azul); background: #eff6ff;">
+                    <div style="font-weight: 700; color: var(--manchester-azul);">🔵 AZUL</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">Não Urgente (240 min)</div>
+                    <div id="count-azul" style="font-size: 1.75rem; font-weight: 700; margin-top: 0.5rem;">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trilha de Auditoria LGPD Recente [RF032] -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Auditoria e Rastreabilidade LGPD [RF032 / RS006]</h3>
+                <span class="btn btn-secondary" onclick="carregarAuditoria()" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">Atualizar</span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Módulo</th>
+                        <th>Operação</th>
+                        <th>Detalhes</th>
+                        <th>IP Origem</th>
+                        <th>Data/Hora</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-auditoria">
+                    <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Carregando registros...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer>
+        MEDCHECK (MedIA) • Projeto Integrado POO & Requisitos CESMAC 2026.2 • Core Java & Node.JS
+    </footer>
+
+    <script>
+        async function carregarDashboard() {
+            try {
+                const res = await fetch('/api/dashboard');
+                const data = await res.json();
+                
+                document.getElementById('stat-triagens').innerText = data.totalTriagens || 0;
+                document.getElementById('stat-pacientes').innerText = data.totalPacientes || 0;
+                document.getElementById('stat-receitas').innerText = data.totalReceitas || 0;
+                document.getElementById('stat-atendimentos').innerText = data.totalAtendimentos || 0;
+
+                const dist = data.distribuicao || {};
+                document.getElementById('count-vermelho').innerText = dist.VERMELHO || 0;
+                document.getElementById('count-laranja').innerText = dist.LARANJA || 0;
+                document.getElementById('count-amarelo').innerText = dist.AMARELO || 0;
+                document.getElementById('count-verde').innerText = dist.VERDE || 0;
+                document.getElementById('count-azul').innerText = dist.AZUL || 0;
+            } catch (err) {
+                console.error('Erro ao carregar métricas:', err);
+            }
+        }
+
+        async function carregarAuditoria() {
+            try {
+                const res = await fetch('/api/auditoria');
+                const logs = await res.json();
+                const tbody = document.getElementById('tabela-auditoria');
+                tbody.innerHTML = '';
+                logs.slice(0, 5).forEach(l => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>#${l.id}</td>
+                        <td><strong>${l.modulo}</strong></td>
+                        <td><span style="font-size:0.75rem; background:#e2e8f0; padding:2px 6px; border-radius:4px;">${l.operacao}</span></td>
+                        <td>${l.detalhes}</td>
+                        <td>${l.ip}</td>
+                        <td>${new Date(l.dataHora).toLocaleString('pt-BR')}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        window.onload = () => {
+            carregarDashboard();
+            carregarAuditoria();
+        };
+    </script>
+</body>
+</html>

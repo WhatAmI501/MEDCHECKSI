@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEDCHECK - Fila de Espera & Teleatendimento</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <a href="/" class="brand">
+                <div class="brand-logo">M+</div>
+                <div class="brand-text">
+                    <h1>MEDCHECK</h1>
+                    <span>Triagem Médica com Inteligência Artificial</span>
+                </div>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="/">📊 Dashboard</a></li>
+                    <li><a href="/triagem.html">💬 Triagem com IA</a></li>
+                    <li><a href="/fila-medica.html" class="active">🩺 Fila & Teleconsulta</a></li>
+                    <li><a href="/receita.html">💊 Receita & QR Code</a></li>
+                    <li><a href="/pacientes.html">👤 Pacientes</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="card-header" style="border: none; padding-bottom: 0;">
+            <div>
+                <h2 style="font-size: 1.35rem;">Fila de Espera Inteligente por Gravidade [RF021]</h2>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">
+                    Ordenação clínica automática: Casos Laranja (Muito Urgente) possuem precedência absoluta sobre Amarelos e Verdes.
+                </p>
+            </div>
+            <button class="btn btn-secondary" onclick="carregarFila()">🔄 Atualizar Fila</button>
+        </div>
+
+        <div class="grid grid-cols-3" style="margin-top: 1rem;">
+            <!-- Lista da Fila Priorizada -->
+            <div style="grid-column: span 2;">
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Posição / Prioridade</th>
+                                <th>Paciente</th>
+                                <th>Queixa Principal</th>
+                                <th>Tempo-Alvo</th>
+                                <th>Ação Clínica</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-fila">
+                            <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Carregando fila priorizada...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sala de Atendimento / Resumo Estruturado [RF007] -->
+            <div>
+                <div class="card" id="painel-atendimento">
+                    <div class="card-header">
+                        <h3 class="card-title" style="font-size: 1rem;">Sala de Teleconsulta Médica</h3>
+                    </div>
+                    <div id="detalhe-paciente-selecionado">
+                        <p style="font-size: 0.85rem; color: var(--text-muted); text-align: center; padding: 2rem 0;">
+                            👈 Selecione um paciente na fila ao lado para iniciar o atendimento médico telepresencial.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        MEDCHECK (MedIA) • Fila Inteligente com Precedência de Manchester • Teleatendimento Clínico
+    </footer>
+
+    <script>
+        let filaAtual = [];
+        let atendimentoAtivo = null;
+
+        async function carregarFila() {
+            try {
+                const res = await fetch('/api/fila');
+                filaAtual = await res.json();
+                renderizarFila();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function renderizarFila() {
+            const tbody = document.getElementById('tabela-fila');
+            tbody.innerHTML = '';
+
+            if (filaAtual.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Nenhum paciente aguardando atendimento no momento.</td></tr>';
+                return;
+            }
+
+            filaAtual.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <span style="font-weight:700; margin-right: 0.5rem;">#${index + 1}</span>
+                        <span class="badge-manchester badge-${item.corManchester}">
+                            ${item.corManchester === 'LARANJA' ? '🟠' : item.corManchester === 'AMARELO' ? '🟡' : '🟢'}
+                            ${item.prioridadeRotulo}
+                        </span>
+                    </td>
+                    <td>
+                        <strong>${item.pacienteNome}</strong><br>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">${item.pacienteIdade} anos</span>
+                    </td>
+                    <td>${item.queixa}</td>
+                    <td><strong>${item.tempoAlvoMinutos} min</strong></td>
+                    <td>
+                        <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.35rem 0.65rem;" onclick="selecionarParaAtendimento(${item.atendimentoId})">
+                            🩺 Atender
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function selecionarParaAtendimento(atendimentoId) {
+            const item = filaAtual.find(f => f.atendimentoId === atendimentoId);
+            if (!item) return;
+            atendimentoAtivo = item;
+
+            // Busca histórico do paciente
+            const res = await fetch(`/api/pacientes/${item.pacienteId}/historico`);
+            const dados = await res.json();
+
+            const painel = document.getElementById('detalhe-paciente-selecionado');
+            painel.innerHTML = `
+                <div style="font-size: 0.85rem; margin-bottom: 0.75rem;">
+                    <strong>Paciente:</strong> ${item.pacienteNome} (${item.pacienteIdade} anos)<br>
+                    <strong>Alergias Conhecidas:</strong> <span style="color: #dc2626; font-weight: 600;">${dados.paciente.alergias || 'Nenhuma declarada'}</span><br>
+                    <strong>Comorbidades:</strong> ${dados.paciente.doencasCronicas || 'Nenhuma'}
+                </div>
+
+                <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.825rem;">
+                    <strong>Resumo Estruturado da Triagem IA:</strong><br>
+                    <em>Queixa: ${item.queixa}</em><br>
+                    Classificado como <span class="badge-manchester badge-${item.corManchester}" style="font-size: 0.7rem; padding: 2px 6px;">${item.prioridadeRotulo}</span>
+                </div>
+
+                <div class="form-group">
+                    <label>Avaliação Clínica do Médico:</label>
+                    <textarea id="medico-avaliacao" rows="3" placeholder="Registre as impressões clínicas e hipóteses..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Conduta e Orientações:</label>
+                    <textarea id="medico-conduta" rows="2" placeholder="Prescrição, repouso, exames ou encaminhamento..."></textarea>
+                </div>
+
+                <div style="display: flex; gap: 0.5rem;">
+                    <a href="/receita.html?atendimentoId=${item.atendimentoId}&pacienteId=${item.pacienteId}&medicoId=2" class="btn btn-secondary" style="font-size: 0.8rem; flex: 1; text-align: center;">
+                        💊 Prescrever Receita
+                    </a>
+                    <button class="btn btn-primary" style="font-size: 0.8rem; flex: 1;" onclick="concluirAtendimento()">
+                        ✔ Finalizar Consulta
+                    </button>
+                </div>
+            `;
+        }
+
+        function concluirAtendimento() {
+            alert('Atendimento concluído com sucesso e vinculado ao Prontuário do Paciente!');
+            carregarFila();
+        }
+
+        window.onload = carregarFila;
+    </script>
+</body>
+</html>

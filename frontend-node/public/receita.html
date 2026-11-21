@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEDCHECK - Prescrição Médica & Validador QR Code</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <a href="/" class="brand">
+                <div class="brand-logo">M+</div>
+                <div class="brand-text">
+                    <h1>MEDCHECK</h1>
+                    <span>Triagem Médica com Inteligência Artificial</span>
+                </div>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="/">📊 Dashboard</a></li>
+                    <li><a href="/triagem.html">💬 Triagem com IA</a></li>
+                    <li><a href="/fila-medica.html">🩺 Fila & Teleconsulta</a></li>
+                    <li><a href="/receita.html" class="active">💊 Receita & QR Code</a></li>
+                    <li><a href="/pacientes.html">👤 Pacientes</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="grid grid-cols-2">
+            <!-- Emissor de Receitas Médicas (Apenas Médico [RS002]) -->
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h3 class="card-title">Emissão de Receita Médica Digital [RF008]</h3>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">Uso exclusivo médico com CRM ativo [RS002]</span>
+                    </div>
+                    <span style="background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;">
+                        CRM/AL 14892 (Dr. Roberto)
+                    </span>
+                </div>
+
+                <div id="alerta-conflito-alergia" style="display: none; background: #fef2f2; border: 1px solid #f87171; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; color: #991b1b; font-size: 0.85rem;">
+                    <strong>⚠️ [BLOQUEIO RS007] Alerta de Conflito de Alergia:</strong><br>
+                    <span id="mensagem-alerta-alergia"></span><br>
+                    <label style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.4rem; font-weight: 600; cursor: pointer;">
+                        <input type="checkbox" id="check-confirmacao-alergia" style="width: auto;"> Estou ciente e confirmo expressamente a prescrição.
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>Paciente:</label>
+                    <select id="rec-paciente" onchange="atualizarAvisosAlergia()">
+                        <option value="4" data-alergias="Dipirona, Anti-inflamatórios">Mariana Oliveira Costa (Alergia a Dipirona)</option>
+                        <option value="5" data-alergias="Penicilina, Amoxicilina">José Ferreira dos Santos (Alergia a Penicilina)</option>
+                        <option value="6" data-alergias="">Ana Beatriz Lima (Sem alergias declaradas)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Alergias Cadastradas no Prontuário [RF030]:</label>
+                    <div id="badge-alergias-paciente" style="background: #f1f5f9; padding: 0.5rem; border-radius: 6px; font-size: 0.85rem; color: #dc2626; font-weight: 600;">
+                        Dipirona, Anti-inflamatórios
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.5rem;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Medicamento Comercial:</label>
+                        <input type="text" id="rec-medicamento" placeholder="Ex: Novalgina 500mg ou Amoxil">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Princípio Ativo:</label>
+                        <input type="text" id="rec-principio" placeholder="Ex: Dipirona ou Amoxicilina">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.5rem;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Dosagem:</label>
+                        <input type="text" id="rec-dosagem" value="1 comprimido" placeholder="Ex: 500mg">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Posologia:</label>
+                        <input type="text" id="rec-posologia" value="De 8 em 8 horas se dor" placeholder="Ex: 8/8h">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Orientações Clínicas e Recomendações:</label>
+                    <textarea id="rec-observacoes" rows="2" placeholder="Orientações de repouso, hidratação ou cuidados..."></textarea>
+                </div>
+
+                <button class="btn btn-primary" style="width: 100%;" onclick="emitirReceita()">
+                    ✍️ Assinar e Emitir Prescrição Digital
+                </button>
+            </div>
+
+            <!-- Validador Público de QR Code & Hash [RF024] -->
+            <div>
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <div class="card-header">
+                        <h3 class="card-title">Validador Público de Receita Médica [RF024]</h3>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">Conferência para Farmácias e Pacientes</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Código Hash Verificador da Receita:</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="text" id="input-hash" placeholder="Insira o código Hash de 32 caracteres...">
+                            <button class="btn btn-secondary" onclick="validarHash()">Validar</button>
+                        </div>
+                    </div>
+
+                    <div id="resultado-validacao" style="display: none; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; background: #f8fafc;">
+                        <!-- Detalhes públicos da validação -->
+                    </div>
+                </div>
+
+                <!-- Demonstração do QR Code Gerado -->
+                <div class="card" id="card-qrcode" style="display: none; text-align: center;">
+                    <h4 style="margin-bottom: 0.5rem;">Receita Emitida com Sucesso!</h4>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        QR Code exclusivo para autenticação pública em farmácias [RF024]
+                    </p>
+                    <div style="display: inline-block; padding: 1rem; background: white; border: 2px dashed #0284c7; border-radius: 12px; margin-bottom: 1rem;">
+                        <div style="font-size: 3rem;">📱</div>
+                        <div style="font-size: 0.75rem; font-weight: 700; color: #0284c7; margin-top: 0.5rem;">VALIDAÇÃO DIGITAL CFM</div>
+                        <div id="qrcode-hash-label" style="font-family: monospace; font-size: 0.8rem; margin-top: 0.25rem;"></div>
+                    </div>
+                    <div>
+                        <button class="btn btn-secondary" style="font-size: 0.85rem;" onclick="copiarHash()">Copiar Hash</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        MEDCHECK (MedIA) • Prescrição Médica Segura • Checagem Automática de Alergias [RS007]
+    </footer>
+
+    <script>
+        let ultimoHashEmitido = '';
+
+        function atualizarAvisosAlergia() {
+            const select = document.getElementById('rec-paciente');
+            const alergias = select.options[select.selectedIndex].getAttribute('data-alergias');
+            document.getElementById('badge-alergias-paciente').innerText = alergias || 'Nenhuma declarada no prontuário';
+            document.getElementById('alerta-conflito-alergia').style.display = 'none';
+        }
+
+        async function emitirReceita() {
+            const pacienteId = document.getElementById('rec-paciente').value;
+            const medicamento = document.getElementById('rec-medicamento').value.trim();
+            const principioAtivo = document.getElementById('rec-principio').value.trim();
+            const dosagem = document.getElementById('rec-dosagem').value.trim();
+            const posologia = document.getElementById('rec-posologia').value.trim();
+            const observacoes = document.getElementById('rec-observacoes').value.trim();
+            const confirmacao = document.getElementById('check-confirmacao-alergia').checked;
+
+            if (!medicamento || !principioAtivo) {
+                alert('Informe o nome do medicamento e o princípio ativo para a verificação clínica!');
+                return;
+            }
+
+            const payload = {
+                atendimentoId: 1,
+                medicoId: 2, // Dr. Roberto
+                medicamento: medicamento,
+                principioAtivo: principioAtivo,
+                dosagem: dosagem,
+                posologia: posologia,
+                observacoes: observacoes,
+                confirmacaoAlergia: confirmacao
+            };
+
+            const res = await fetch('/api/receitas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            if (res.status === 409 && data.alertaAlergia) {
+                // Alerta de conflito de alergia [RS007]
+                const box = document.getElementById('alerta-conflito-alergia');
+                document.getElementById('mensagem-alerta-alergia').innerText = data.erro;
+                box.style.display = 'block';
+                return;
+            }
+
+            if (data.sucesso) {
+                ultimoHashEmitido = data.hash;
+                document.getElementById('card-qrcode').style.display = 'block';
+                document.getElementById('qrcode-hash-label').innerText = data.hash;
+                document.getElementById('input-hash').value = data.hash;
+                document.getElementById('alerta-conflito-alergia').style.display = 'none';
+                validarHash();
+            } else {
+                alert('Erro na emissão: ' + data.erro);
+            }
+        }
+
+        async function validarHash() {
+            const hash = document.getElementById('input-hash').value.trim();
+            if (!hash) return;
+
+            const res = await fetch(`/api/receitas/validar?hash=${encodeURIComponent(hash)}`);
+            const data = await res.json();
+            const painel = document.getElementById('resultado-validacao');
+            painel.style.display = 'block';
+
+            if (data.valida) {
+                painel.innerHTML = `
+                    <div style="color: #16a34a; font-weight: 700; margin-bottom: 0.5rem;">
+                        ✔ RECEITA AUTÊNTICA E VÁLIDA
+                    </div>
+                    <div style="font-size: 0.85rem; line-height: 1.6;">
+                        <strong>Médico Emissor:</strong> ${data.medicoNome} (${data.crm})<br>
+                        <strong>Paciente:</strong> ${data.pacienteNome}<br>
+                        <strong>Data de Emissão:</strong> ${new Date(data.dataEmissao).toLocaleString('pt-BR')}<br>
+                        <strong>Status:</strong> <span style="background: #dcfce7; color: #166534; padding: 2px 6px; border-radius: 4px; font-weight: 700;">${data.status}</span>
+                    </div>
+                `;
+            } else {
+                painel.innerHTML = `
+                    <div style="color: #dc2626; font-weight: 700;">
+                        ❌ RECEITA NÃO LOCALIZADA OU ASSINATURA INVÁLIDA
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+                        ${data.erro}
+                    </p>
+                `;
+            }
+        }
+
+        function copiarHash() {
+            if (ultimoHashEmitido) {
+                navigator.clipboard.writeText(ultimoHashEmitido);
+                alert('Código Hash copiado para a área de transferência!');
+            }
+        }
+    </script>
+</body>
+</html>

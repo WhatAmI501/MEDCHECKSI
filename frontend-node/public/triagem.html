@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEDCHECK - Triagem Inteligente com IA</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <a href="/" class="brand">
+                <div class="brand-logo">M+</div>
+                <div class="brand-text">
+                    <h1>MEDCHECK</h1>
+                    <span>Triagem Médica com Inteligência Artificial</span>
+                </div>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="/">📊 Dashboard</a></li>
+                    <li><a href="/triagem.html" class="active">💬 Triagem com IA</a></li>
+                    <li><a href="/fila-medica.html">🩺 Fila & Teleconsulta</a></li>
+                    <li><a href="/receita.html">💊 Receita & QR Code</a></li>
+                    <li><a href="/pacientes.html">👤 Pacientes</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- Aviso Legal Obrigatório [RF005 / Resolução CFM] -->
+        <div style="background: #e0f2fe; border: 1px solid #7dd3fc; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; font-size: 0.875rem; color: #0369a1;">
+            ℹ️ <strong>Aviso Legal Importante:</strong> Esta triagem com IA tem finalidade de orientação preliminar e classificação de risco pelo Protocolo de Manchester. Não substitui consulta ou diagnóstico médico definitivo.
+        </div>
+
+        <div class="grid grid-cols-3">
+            <!-- Coluna 1 e 2: Chat Conversacional com IA -->
+            <div style="grid-column: span 2;">
+                <div class="card" style="padding: 1.25rem;">
+                    <div class="card-header">
+                        <div>
+                            <h3 class="card-title">Assistente Conversacional MedIA [RF004]</h3>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">Investigação dinâmica progressiva de sintomas</span>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <label for="select-paciente" style="margin: 0; font-size: 0.8rem;">Paciente:</label>
+                            <select id="select-paciente" style="width: auto; padding: 0.35rem 0.5rem; font-size: 0.85rem;">
+                                <option value="5">José Ferreira (Cardiopata/Hipertenso)</option>
+                                <option value="4">Mariana Costa (Alergia a Dipirona)</option>
+                                <option value="6">Ana Beatriz Lima</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chat-messages">
+                            <!-- Mensagens dinâmicas inseridas aqui -->
+                        </div>
+                        <div class="chat-input-bar">
+                            <input type="text" id="chat-input" placeholder="Descreva seus sintomas aqui..." onkeypress="handleEnter(event)">
+                            <button class="btn btn-primary" id="btn-enviar" onclick="enviarMensagem()">Enviar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coluna 3: Sinais Vitais Opcionais [RF019] & Resultado Manchester [RF005] -->
+            <div>
+                <div class="card" style="margin-bottom: 1.25rem;">
+                    <div class="card-header">
+                        <h3 class="card-title" style="font-size: 1rem;">Sinais Vitais [RF019]</h3>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Autoinformados</span>
+                    </div>
+                    <div style="font-size: 0.825rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                        Caso possua aparelhos em casa, informe para refinar a prioridade:
+                    </div>
+                    <div class="form-group">
+                        <label>Temperatura (°C):</label>
+                        <input type="number" id="vital-temp" step="0.1" placeholder="Ex: 37.5">
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>PA Sistólica:</label>
+                            <input type="number" id="vital-pa-sis" placeholder="120">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>PA Diastólica:</label>
+                            <input type="number" id="vital-pa-dia" placeholder="80">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>SpO2 (% O2):</label>
+                            <input type="number" id="vital-spo2" placeholder="Ex: 98">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>FC (bpm):</label>
+                            <input type="number" id="vital-fc" placeholder="Ex: 80">
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" style="width: 100%; font-size: 0.85rem;" onclick="aplicarVitaisRapidos()">Inserir Parâmetros</button>
+                </div>
+
+                <!-- Card de Classificação Manchester (Preenchido ao concluir) -->
+                <div class="card" id="card-resultado" style="display: none;">
+                    <div class="card-header">
+                        <h3 class="card-title" style="font-size: 1rem;">Classificação Clínica [RF005]</h3>
+                    </div>
+                    <div id="resultado-conteudo">
+                        <!-- Injetado dinamicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        MEDCHECK (MedIA) • Protocolo de Manchester Determinístico e Separação Arquitetural RNF13
+    </footer>
+
+    <script>
+        let chatStep = 0;
+        let chatContext = {};
+
+        async function inicializarChat() {
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.innerHTML = '';
+            chatStep = 0;
+            chatContext = {};
+            
+            // Inicia diálogo da IA
+            const res = await fetch('/api/chat-ia', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ step: 0, message: '', context: {} })
+            });
+            const data = await res.json();
+            adicionarBolha(data.resposta, 'ia');
+            chatStep = data.step;
+            chatContext = data.context;
+        }
+
+        function adicionarBolha(texto, tipo) {
+            const chatMessages = document.getElementById('chat-messages');
+            const bubble = document.createElement('div');
+            bubble.className = `chat-bubble chat-${tipo}`;
+            bubble.innerHTML = texto.replace(/\n/g, '<br>');
+            chatMessages.appendChild(bubble);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') enviarMensagem();
+        }
+
+        async function enviarMensagem() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            adicionarBolha(msg, 'paciente');
+            input.value = '';
+
+            const res = await fetch('/api/chat-ia', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ step: chatStep, message: msg, context: chatContext })
+            });
+            const data = await res.json();
+            adicionarBolha(data.resposta, 'ia');
+            chatStep = data.step;
+            chatContext = data.context;
+
+            if (data.finalizado) {
+                // Acionar o Motor Java do Protocolo de Manchester [RF005 / RNF13]
+                processarMotorManchester();
+            }
+        }
+
+        function aplicarVitaisRapidos() {
+            alert('Sinais vitais vinculados ao contexto da triagem!');
+        }
+
+        async function processarMotorManchester() {
+            const pacienteId = document.getElementById('select-paciente').value;
+            const temp = document.getElementById('vital-temp').value;
+            const paSis = document.getElementById('vital-pa-sis').value;
+            const paDia = document.getElementById('vital-pa-dia').value;
+            const spo2 = document.getElementById('vital-spo2').value;
+            const fc = document.getElementById('vital-fc').value;
+
+            const payload = {
+                pacienteId: pacienteId,
+                queixa: chatContext.queixa || 'Sintomas relatados em consulta',
+                local: chatContext.localEIntensidade || 'Corpo',
+                intensidade: 'INTENSA',
+                duracao: chatContext.duracaoEFrequencia || 'Recente',
+                frequencia: 'CONTINUA',
+                sintomasAssociados: chatContext.sintomasAssociados || '',
+                temperatura: temp,
+                paSistolica: paSis,
+                paDiastolica: paDia,
+                spo2: spo2,
+                fc: fc
+            };
+
+            const res = await fetch('/api/triagens', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            if (data.sucesso) {
+                exibirResultadoManchester(data);
+            } else {
+                alert('Erro ao classificar triagem: ' + data.erro);
+            }
+        }
+
+        function exibirResultadoManchester(data) {
+            const card = document.getElementById('card-resultado');
+            const conteudo = document.getElementById('resultado-conteudo');
+            card.style.display = 'block';
+
+            let alertaEmergenciaHtml = '';
+            if (data.corManchester === 'VERMELHO') {
+                alertaEmergenciaHtml = `
+                    <div class="emergency-alert" style="padding: 1rem; margin-bottom: 1rem;">
+                        <div class="emergency-icon">🚨</div>
+                        <div>
+                            <strong>EMERGÊNCIA MÉDICA DETECTADA!</strong><br>
+                            Acione imediatamente o SAMU (192) ou dirija-se à UPA/Hospital mais próximo. Não aguarde teleconsulta.
+                        </div>
+                    </div>
+                `;
+            }
+
+            conteudo.innerHTML = `
+                ${alertaEmergenciaHtml}
+                <div style="text-align: center; margin-bottom: 1rem;">
+                    <span class="badge-manchester badge-${data.corManchester}" style="font-size: 1rem; padding: 0.5rem 1rem;">
+                        ${data.corManchester === 'VERMELHO' ? '🔴' : data.corManchester === 'LARANJA' ? '🟠' : data.corManchester === 'AMARELO' ? '🟡' : '🟢'}
+                        ${data.prioridadeRotulo}
+                    </span>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.4rem;">
+                        Tempo-Alvo Máximo de Atendimento: <strong>${data.tempoAlvoMinutos} minutos</strong>
+                    </div>
+                </div>
+
+                <div style="font-size: 0.85rem; margin-bottom: 0.75rem;">
+                    <strong>Orientações ao Paciente:</strong><br>
+                    ${data.orientacaoPaciente}
+                </div>
+
+                <div style="font-size: 0.85rem; margin-bottom: 0.75rem;">
+                    <strong>Encaminhamento Recomendado:</strong><br>
+                    ${data.encaminhamentoRecomendado}
+                </div>
+
+                <div style="font-size: 0.85rem; margin-bottom: 0.75rem; background: #fffbeb; padding: 0.5rem; border-radius: 6px;">
+                    ⚠️ <strong>Sinais de Alerta:</strong><br>
+                    ${data.sinaisAlerta}
+                </div>
+
+                <div style="text-align: center; margin-top: 1rem;">
+                    <a href="/fila-medica.html" class="btn btn-primary" style="font-size: 0.85rem; width: 100%;">Ir para Fila de Teleatendimento</a>
+                </div>
+            `;
+        }
+
+        window.onload = inicializarChat;
+    </script>
+</body>
+</html>
