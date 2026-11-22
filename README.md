@@ -65,7 +65,7 @@ node server.js
 #### 3. Acessar no Navegador:
 
 Abra o seu navegador e acesse:  
-👉 **[http://localhost:3000](http://localhost:3000)**
+**[http://localhost:3000](http://localhost:3000)**
 
 ---
 
@@ -120,8 +120,7 @@ MEDCHECKSI/
 │   │   ├── service/               # Serviços de Negócio (Auth, Clinica, Receita com Hash SHA-256)
 │   │   │   └── manchester/        # Strategy Pattern (Classificadores Cefaleia, Dispneia, DorToracica)
 │   │   ├── MedCheckApplication.java # Ponto de entrada do Core Java
-│   │   └── MedCheckCoreTest.java    # Suíte de Testes Automatizados 
-│   └── bin/                       # Bytecodes compilados (.class) [ignorado no Git]
+│   │   └── MedCheckCoreTest.java    # Suíte de Testes Automatizados
 ├── frontend-node/                 # Gateway BFF & Web em Node.js (Porta 3000)
 │   ├── public/                    # Telas estáticas, estilos CSS e scripts
 │   │   ├── index.html             # Painel Geral Executivo (com gráficos e KPIs)
