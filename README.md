@@ -84,7 +84,7 @@ A aplicação conta com navegação ergonômica via menu lateral adaptativo e ba
 
 ---
 
-## Como Executar a Suíte de Testes Automatizados (AV03)
+## Como Executar a Suíte de Testes Automatizados
 
 O projeto inclui suíte de testes unitários que valida 100% das regras invariantes de negócio e os 4 pilares de POO:
 
@@ -120,7 +120,7 @@ MEDCHECKSI/
 │   │   ├── service/               # Serviços de Negócio (Auth, Clinica, Receita com Hash SHA-256)
 │   │   │   └── manchester/        # Strategy Pattern (Classificadores Cefaleia, Dispneia, DorToracica)
 │   │   ├── MedCheckApplication.java # Ponto de entrada do Core Java
-│   │   └── MedCheckCoreTest.java    # Suíte de Testes Automatizados (AV03)
+│   │   └── MedCheckCoreTest.java    # Suíte de Testes Automatizados 
 │   └── bin/                       # Bytecodes compilados (.class) [ignorado no Git]
 ├── frontend-node/                 # Gateway BFF & Web em Node.js (Porta 3000)
 │   ├── public/                    # Telas estáticas, estilos CSS e scripts
