@@ -1,109 +1,156 @@
-# MEDCHECKSI — Sistema de Triagem Médica com Inteligência Artificial (MedIA)
-
-> **Projeto Integrado:** Programação Orientada a Objetos 2026.2 (Avaliação Integrada AV03)  
-> **Instituição:** Centro Universitário CESMAC  
-> **Autores:** João Lucas de Assis Lins & João Vinícius Silva dos Santos  
-> **Stack:** Java 25 (Core POO & Motor Manchester) + Node.JS v24 (Frontend Web & BFF Conversacional)
+# MEDCHECK — Sistema de Triagem Médica com Inteligência Artificial (MedIA)
 
 ---
 
-## 📋 Visão Geral
 O **MEDCHECK (MedIA)** é uma plataforma digital projetada para auxiliar pacientes na identificação inicial de sintomas, avaliação de prioridade clínica fundamentada na árvore de decisão do **Protocolo de Manchester** e direcionamento adequado para a rede de saúde antes do deslocamento presencial.
 
-O sistema atua em conformidade com as diretrizes do Conselho Federal de Medicina (Resolução CFM nº 2.314/2022) e a LGPD (Lei nº 13.709/2018), garantindo **separação arquitetural estrita (RNF13)** entre a interpretação de linguagem natural (IA conversacional) e o motor clínico determinístico de classificação de risco.
-
 ---
-
-## 🏛️ Os 4 Pilares de POO em Java (60% da Avaliação AV03)
-
-O núcleo de regras de negócio e classificação clínica foi desenvolvido em **Java 25**, aplicando com rigor os pilares da Orientação a Objetos:
-
-1. **Abstração:**
-   - Contratos clínicos bem definidos através da classe abstrata [`Usuario`](backend-java/src/br/com/cesmac/medcheck/model/Usuario.java) com método abstrato `obterDescricaoPerfil()`.
-   - Classe abstrata [`ProfissionalSaude`](backend-java/src/br/com/cesmac/medcheck/model/ProfissionalSaude.java) encapsulando conselhos profissionais (CRM/COREN).
-   - Interface [`IClassificadorManchester`](backend-java/src/br/com/cesmac/medcheck/service/manchester/IClassificadorManchester.java) abstraindo estratégias de árvores de decisão clínica.
-2. **Encapsulamento & Invariantes:**
-   - Todos os atributos protegidos por visibilidade privada com regras de negócio nos acessores.
-   - **Value Object [`CPF`](backend-java/src/br/com/cesmac/medcheck/model/valueobjects/CPF.java):** Validação dos 11 dígitos, cálculo dos dígitos verificadores e imutabilidade estrita (RS001).
-   - **Value Object [`SinaisVitais`](backend-java/src/br/com/cesmac/medcheck/model/valueobjects/SinaisVitais.java):** Encapsula regras semânticas de gravidade (`isDessaturandoCritico()`, `isFebreAlta()`, `isCriseHipertensiva()`).
-   - **Value Object [`ItemReceita`](backend-java/src/br/com/cesmac/medcheck/model/valueobjects/ItemReceita.java):** Princípio ativo, dosagem e posologia para prevenção de reações alérgicas.
-3. **Herança:**
-   - `Usuario` $\rightarrow$ `Paciente`
-   - `Usuario` $\rightarrow$ `ProfissionalSaude` $\rightarrow$ `Medico`, `Enfermeiro`
-4. **Polimorfismo (Strategy Pattern):**
-   - Motor do Protocolo de Manchester ([`MotorClassificacaoManchester`](backend-java/src/br/com/cesmac/medcheck/service/manchester/MotorClassificacaoManchester.java)) executando estratégias polimórficas de acordo com o quadro clínico:
-     - `ClassificadorDorToracica` (Protocolo cardiovascular/anginoso)
-     - `ClassificadorDispneia` (Protocolo respiratório/hipóxia)
-     - `ClassificadorCefaleia` (Protocolo neurológico/meníngeo)
-     - `ClassificadorGeral` (Fallback clínico determinístico)
-
----
-
-## 🚀 7 Funcionalidades Funcionais Completas (Ponta a Ponta)
-
-1. **RF001 / RF002 — Cadastro de Paciente e Histórico Clínico:** CPF único e imutável, dados antropométricos, histórico familiar, comorbidades e alergias registradas.
-2. **RF003 / RF014 — Autenticação e Perfis RBAC:** Perfis `PACIENTE`, `MEDICO`, `ENFERMEIRO` e `ADMINISTRADOR`, com proteção contra tentativas inválidas (RS008).
-3. **RF004 / RF019 — Triagem Conversacional IA com Sinais Vitais:** Coleta guiada e empática de sintomas e sinais vitais autoinformados com anonimização de PII (RS004 / RNF18).
-4. **RF005 / RF006 — Motor Protocolo de Manchester & Alerta de Emergência:** Classificação determinística em 5 cores (Vermelho, Laranja, Amarelo, Verde, Azul). Casos Vermelhos disparam alerta imediato de emergência SAMU 192 (RS005).
-5. **RF007 / RF021 — Fila Inteligente & Teleconsulta:** Fila dinâmica onde casos Laranja (Muito Urgente) possuem precedência absoluta sobre Amarelos e Verdes.
-6. **RF008 / RF024 / RF030 — Receita com QR Code & Bloqueio Anti-Alergia:** Prescrição restrita a médicos (RS002), cruzamento automático com as alergias do paciente com bloqueio preventivo (RS007) e autenticação pública por Hash SHA-256 e QR Code.
-7. **RF009 / RF012 / RF032 — Histórico Longitudinal, Dashboard & Auditoria LGPD:** Prontuário em ordem cronológica, gráficos de indicadores clínicos (WCAG 2.1) e log imutável de operações.
-
----
-
-## 🗄️ Estrutura do Banco de Dados Relacional
-
-- **[`database/schema.sql`](database/schema.sql):** Esquema relacional DDL com 12 tabelas normalizadas.
-- **[`database/seed.sql`](database/seed.sql):** Dados de homologação contendo médicos, pacientes com alergias registradas (ex: Dipirona, Penicilina) e triagens pré-alimentadas.
-
----
-
-## 📂 Estrutura de Diretórios
-
-```
-├── backend-java/               # Core de Domínio em Java 25 (POO & Manchester)
-│   └── src/br/com/cesmac/medcheck/
-│       ├── model/             # Entidades, Enums e Value Objects (Herança e Encapsulamento)
-│       ├── service/           # Regras de Negócio e Motor Manchester (Polimorfismo & Strategy)
-│       ├── repository/        # Repositório de Dados e Persistência
-│       ├── api/               # Servidor REST HTTP Java nativo (Porta 8080)
-│       ├── MedCheckApplication.java # Entrypoint Java
-│       └── MedCheckCoreTest.java    # Suíte de Testes Automatizados (8/8 Testes)
-├── frontend-node/              # BFF e Interface Web em Node.JS v24 (Porta 3000)
-│   ├── server.js              # Servidor Web, Gateway IA e Proxy para o Java
-│   └── public/                # Telas (Dashboard, Triagem IA, Fila Médica, Receita QR Code, Pacientes)
-├── database/                   # Scripts SQL (schema.sql e seed.sql)
-└── docs/                       # Documentação Obrigatória em Markdown
-    ├── prd.md                 # Documento de Requisitos de Produto
-    ├── arquitetura.md         # Definição Arquitetural e Pilares de POO
-    ├── state.md               # Estado atual do projeto
-    └── specs/                 # Especificações Técnicas (Specs 0001 a 0007)
-```
-
----
-
-## 🛠️ Como Executar o Projeto
 
 ### Pré-requisitos
 - OpenJDK 21+ ou Java 25
 - Node.js v20+ ou v24
 
-### 1. Executar a Suíte de Testes de Homologação dos 4 Pilares de POO:
+---
+
+## Como Rodar o Projeto (Passo a Passo)
+
+### Passo 1: Clonar o Repositório do GitHub
+
+Abra o terminal em uma pasta de sua preferência e execute:
+
 ```bash
-javac -encoding UTF-8 -d backend-java/bin $(find backend-java/src -name "*.java")
-java -cp backend-java/bin br.com.cesmac.medcheck.MedCheckCoreTest
+git clone https://github.com/WhatAmI501/MEDCHECKSI.git
+cd MEDCHECKSI
 ```
 
-### 2. Iniciar o Servidor Core Java (Porta 8080):
-```bash
-java -cp backend-java/bin br.com.cesmac.medcheck.MedCheckApplication
-```
+---
 
-### 3. Iniciar o Frontend Web & BFF Node.JS (Porta 3000):
+### Passo 2: Executar a Aplicação (2 Terminais)
+
+Como o sistema conta com dois servidores contínuos e independentes trabalhando integrados (o Core Java na porta **8080** e o Gateway Web Node.js na porta **3000**), você deve utilizar **duas janelas de terminal**:
+
+#### 1. No Terminal 1 — Compilar e Iniciar o Backend Core Java (Porta 8080):
+
+- **No Windows (PowerShell):**
+  ```powershell
+  javac -encoding UTF-8 -d backend-java/bin (Get-ChildItem -Path backend-java/src -Recurse -Filter *.java | ForEach-Object { $_.FullName })
+  java -cp backend-java/bin br.com.cesmac.medcheck.MedCheckApplication
+  ```
+
+- **No Windows (Prompt de Comando / CMD):**
+  ```cmd
+  dir /s /b backend-java\src\*.java > sources.txt && javac -encoding UTF-8 -d backend-java/bin @sources.txt && del sources.txt
+  java -cp backend-java/bin br.com.cesmac.medcheck.MedCheckApplication
+  ```
+
+- **No Linux / macOS:**
+  ```bash
+  javac -encoding UTF-8 -d backend-java/bin $(find backend-java/src -name "*.java")
+  java -cp backend-java/bin br.com.cesmac.medcheck.MedCheckApplication
+  ```
+
+> *Mantenha o Terminal 1 aberto. Ele confirmará que o servidor REST Java está ativo na porta 8080 e os pilares de POO foram carregados.*
+
+#### 2. No Terminal 2 — Iniciar o Frontend & Gateway Node.js (Porta 3000):
+
+Abra uma **segunda janela de terminal**, navegue até a pasta do projeto e execute:
+
 ```bash
 cd frontend-node
 node server.js
 ```
 
-### 4. Acessar no Navegador:
-Abra [http://localhost:3000](http://localhost:3000) para acessar a aplicação.
+> *O servidor web iniciará e exibirá: `MEDCHECK (MedIA) - Frontend Web & BFF Node.JS ativo`.*
+
+#### 3. Acessar no Navegador:
+
+Abra o seu navegador e acesse:  
+👉 **[http://localhost:3000](http://localhost:3000)**
+
+---
+
+## Módulos e Funcionalidades do Sistema
+
+A aplicação conta com navegação ergonômica via menu lateral adaptativo e barra superior com alternador de tema claro/escuro:
+
+| Módulo | Rota | Descrição |
+| :--- | :--- | :--- |
+| **Painel Geral** | `/` | Dashboard executivo com novos KPIs operacionais (TME, Resolutividade, Segurança), gráficos analíticos de evolução semanal e rosca de desfechos clínicos. |
+| **Triagem Virtual** | `/triagem.html` | Acolhimento interativo com a assistente de IA *MedIA*, categorização determinística pelo Protocolo de Manchester (Vermelho, Laranja, Amarelo, Verde e Azul) e acionamento de SAMU 192. |
+| **Fila Priorizada** | `/fila-medica.html` | Gestão médica com fila ordenada estritamente por gravidade clínica e tempo-alvo assistencial. |
+| **Prescrição & QR** | `/receita.html` | Emissão de receituário médico digital com assinatura eletrônica e validação pública por **QR Code e Hash SHA-256**. Possui bloqueio automático anti-alergia [RS007]. |
+| **Gestão de Pacientes** | `/pacientes.html` | Cadastro e prontuário longitudinal com chave única e histórico de consultas. |
+| **Auditoria & Logs** | `/auditoria.html` | Livro eletrônico de eventos com trilha imutável, endereço IP, carimbo temporal, filtros avançados e exportação de relatórios em JSON (Conformidade LGPD Art. 37 & CFM). |
+
+---
+
+## Como Executar a Suíte de Testes Automatizados (AV03)
+
+O projeto inclui suíte de testes unitários que valida 100% das regras invariantes de negócio e os 4 pilares de POO:
+
+```bash
+java -cp backend-java/bin br.com.cesmac.medcheck.MedCheckCoreTest
+```
+
+**Cobertura da Suíte:**
+- **[TESTE 1]** Encapsulamento de CPF e Validação Invariante com cálculo dos dígitos verificadores.
+- **[TESTE 2]** Encapsulamento de Sinais Vitais (Pressão, SpO2, Frequência Cardíaca, Temperatura).
+- **[TESTE 3]** Herança e Abstração de Usuários (`Usuario` $\rightarrow$ `Paciente`, `ProfissionalSaude` $\rightarrow$ `Medico`, `Enfermeiro`).
+- **[TESTE 4]** Polimorfismo e Strategy Pattern (Caso Cardiovascular: Manchester Laranja - 10 min).
+- **[TESTE 5]** Polimorfismo em Emergência Extrema (Caso Respiratório: Manchester Vermelho - Interrupção imediata e acionamento SAMU 192).
+- **[TESTE 6]** Fila de Espera Inteligente (Ordenação estrita por gravidade clínica antes do tempo cronológico).
+- **[TESTE 7]** Bloqueio Preventivo de Medicamento Conflitante com Alergia prévia do paciente [RS007].
+- **[TESTE 8]** Emissão de Receita Digital com Hash Criptográfico SHA-256 e verificação pública de integridade [RF024].
+
+---
+
+## Arquitetura da Solução & 4 Pilares de POO
+
+O Core Java foi projetado seguindo as melhores práticas da Orientação a Objetos:
+
+```
+MEDCHECKSI/
+├── backend-java/                  # Core em Java 25 (Motor Clínico & Regras de Negócio)
+│   ├── src/br/com/cesmac/medcheck/
+│   │   ├── api/                   # Servidor HTTP REST Nativo (Porta 8080)
+│   │   ├── model/                 # Entidades de Domínio (Usuario, Paciente, Medico, Triagem, Receita)
+│   │   │   ├── enums/             # CorManchester, NivelPrioridade, PerfilAcesso, StatusAtendimento
+│   │   │   └── valueobjects/      # Value Objects Imutáveis (CPF com validação, SinaisVitais)
+│   │   ├── repository/            # Camada de Persistência em Memória Thread-Safe (Singleton)
+│   │   ├── service/               # Serviços de Negócio (Auth, Clinica, Receita com Hash SHA-256)
+│   │   │   └── manchester/        # Strategy Pattern (Classificadores Cefaleia, Dispneia, DorToracica)
+│   │   ├── MedCheckApplication.java # Ponto de entrada do Core Java
+│   │   └── MedCheckCoreTest.java    # Suíte de Testes Automatizados (AV03)
+│   └── bin/                       # Bytecodes compilados (.class) [ignorado no Git]
+├── frontend-node/                 # Gateway BFF & Web em Node.js (Porta 3000)
+│   ├── public/                    # Telas estáticas, estilos CSS e scripts
+│   │   ├── index.html             # Painel Geral Executivo (com gráficos e KPIs)
+│   │   ├── triagem.html           # Chat com IA MedIA e Classificação Manchester
+│   │   ├── fila-medica.html       # Fila Priorizada de Atendimento
+│   │   ├── receita.html           # Prescrição Digital & Leitor QR Code
+│   │   ├── pacientes.html         # Gestão de Prontuários Clínicos
+│   │   ├── auditoria.html         # Módulo Dedicado de Trilha de Auditoria
+│   │   ├── styles.css             # Design System Clínico com suporte Claro/Escuro
+│   │   └── theme.js               # Gerenciador de Temas com prevenção de FOUC
+│   └── server.js                  # Gateway Web com proxy reverso para a porta 8080
+├── database/                      # Modelagem Relacional (SQL DDL & Cargas Iniciais)
+│   ├── schema.sql
+│   └── seed.sql
+├── docs/                          # Documentação de Arquitetura, PRDs e Decisões Técnicas (ADR)
+└── README.md
+```
+
+---
+
+## Segurança & Privacidade (LGPD & OWASP)
+
+- **Anonimização de Sintomas:** Durante a conversa com a IA, dados de identificação pessoal (CPF, nome) são estritamente desacoplados das queixas clínicas (RNF04).
+- **Trilha Imutável de Auditoria:** Todas as consultas, triagens, prescrições e bloqueios de segurança são registrados com carimbo de data/hora, endereço IP e identificador do operador (RS006 / LGPD Art. 37).
+- **Integridade Criptográfica:** Receitas médicas emitidas recebem resumo criptográfico SHA-256 inviolável, passível de validação pública.
+- **Acessibilidade Inclusiva:** Contraste tipográfico superior ($\ge 4.5:1$ a $12:1$) em ambos os modos claro e escuro, seguindo a diretriz WCAG 2.1 AA.
+
+---
+
+## Licença & Créditos
+
+Código aberto sob a licença [MIT](LICENSE).

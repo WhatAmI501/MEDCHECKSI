@@ -176,7 +176,7 @@ public class MedCheckCoreTest {
                 receitaService.emitirReceita(2, 2, itensConflitantes, "Orientações", false);
                 System.out.println("❌ FALHA: sistema não bloqueou prescrição com alérgeno!");
             } catch (IllegalStateException e) {
-                if (e.getMessage().contains("ALERTA CRÍTICO DE ALERGIA")) {
+                if (e.getMessage().contains("alergia ao medicamento prescrito") || e.getMessage().contains("hipersensibilidade")) {
                     testesAprovados++;
                     System.out.println("✔ APROVADO (Bloqueio preventivo disparado com sucesso)");
                 } else {

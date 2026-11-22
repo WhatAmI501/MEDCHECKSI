@@ -25,10 +25,10 @@ public class ReceitaService {
      */
     public ReceitaMedica emitirReceita(Integer atendimentoId, Integer medicoId,
                                       List<ItemReceita> itens, String observacoes, boolean confirmacaoExplicitaAlergia) {
-        // 1. Verificação de Perfil [RS002]
+        // 1. Verificação de Perfil Médico
         Usuario usuario = dataStore.buscarUsuarioPorId(medicoId);
         if (usuario == null || usuario.getPerfil() != PerfilAcesso.MEDICO) {
-            throw new SecurityException("[BLOQUEIO RS002] Apenas profissionais médicos autenticados com CRM ativo podem emitir receitas.");
+            throw new SecurityException("Apenas profissionais médicos autenticados com registro profissional ativo podem emitir prescrições.");
         }
 
         AtendimentoMedico atendimento = dataStore.buscarAtendimentoPorId(atendimentoId);
@@ -39,7 +39,7 @@ public class ReceitaService {
         Integer pacienteId = atendimento.getPacienteId();
         HistoricoClinico historico = dataStore.buscarHistoricoPorPaciente(pacienteId);
 
-        // 2. Verificação Cruzada de Alergias [RF030 / RS007]
+        // 2. Verificação Cruzada de Alergias
         List<String> conflitosAlergia = new ArrayList<>();
         if (historico != null && itens != null) {
             for (ItemReceita item : itens) {
@@ -51,7 +51,7 @@ public class ReceitaService {
 
         if (!conflitosAlergia.isEmpty() && !confirmacaoExplicitaAlergia) {
             String lista = String.join(", ", conflitosAlergia);
-            throw new IllegalStateException("[ALERTA CRÍTICO DE ALERGIA RS007] O paciente possui alergia declarada aos seguintes medicamentos prescritos: "
+            throw new IllegalStateException("O paciente possui histórico declarado de hipersensibilidade ou alergia ao medicamento prescrito: "
                     + lista + ". É necessária confirmação clínica explícita para prosseguir.");
         }
 

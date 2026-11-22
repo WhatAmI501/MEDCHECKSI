@@ -27,7 +27,7 @@ public class AuthService {
         String login = identificador.trim();
         int falhas = tentativasFalhasPorLogin.getOrDefault(login, 0);
         if (falhas >= 5) {
-            throw new SecurityException("[BLOQUEIO RS008] Conta temporariamente bloqueada por 5 tentativas inválidas de acesso.");
+            throw new SecurityException("Conta de acesso temporariamente bloqueada após 5 tentativas inválidas consecutivas.");
         }
 
         Usuario usuario = null;

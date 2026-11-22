@@ -1,6 +1,6 @@
 /**
  * MEDCHECK (MedIA) - Gateway BFF & Servidor Web em Node.JS
- * Orquestra a Interface Web e o Chat Conversacional com IA [RF004]
+ * Orquestra a Interface Web e o Chat Conversacional com IA MedIA
  * Integra-se ao Core POO Java (Porta 8080)
  */
 
@@ -38,7 +38,7 @@ const server = http.createServer(async (req, res) => {
     const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
     let pathname = parsedUrl.pathname;
 
-    // 1. Orquestrador Conversacional Inteligente com IA [RF004 / RS004]
+    // 1. Orquestrador Conversacional Inteligente com IA MedIA
     if (pathname === '/api/chat-ia' && req.method === 'POST') {
         let body = '';
         req.on('data', chunk => { body += chunk; });
@@ -49,7 +49,7 @@ const server = http.createServer(async (req, res) => {
                 const message = (data.message || '').trim();
                 const context = data.context || {};
 
-                // Anonimização de PII [RS004 / RNF18]: Omitir dados identificáveis do paciente
+                // Anonimização de Dados Sensíveis: Omitir identificadores pessoais do paciente
                 const contextoAnonimizado = {
                     idade: context.idade || 30,
                     sexo: context.sexo || 'Não informado',

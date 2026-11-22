@@ -47,7 +47,7 @@ public class Triagem implements Serializable {
     }
 
     public void interromperPorEmergencia(String motivo) {
-        this.resumoEstruturado = "[INTERRUPÇÃO IMEDIATA POR EMERGÊNCIA] " + motivo;
+        this.resumoEstruturado = "Encaminhamento prioritário por detecção de emergência médica: " + motivo;
         this.dataHoraFim = LocalDateTime.now();
         this.status = StatusTriagem.INTERROMPIDA_EMERGENCIA;
     }
