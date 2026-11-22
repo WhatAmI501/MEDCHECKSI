@@ -142,15 +142,6 @@ MEDCHECKSI/
 
 ---
 
-## Segurança & Privacidade (LGPD & OWASP)
-
-- **Anonimização de Sintomas:** Durante a conversa com a IA, dados de identificação pessoal (CPF, nome) são estritamente desacoplados das queixas clínicas (RNF04).
-- **Trilha Imutável de Auditoria:** Todas as consultas, triagens, prescrições e bloqueios de segurança são registrados com carimbo de data/hora, endereço IP e identificador do operador (RS006 / LGPD Art. 37).
-- **Integridade Criptográfica:** Receitas médicas emitidas recebem resumo criptográfico SHA-256 inviolável, passível de validação pública.
-- **Acessibilidade Inclusiva:** Contraste tipográfico superior ($\ge 4.5:1$ a $12:1$) em ambos os modos claro e escuro, seguindo a diretriz WCAG 2.1 AA.
-
----
-
 ## Licença & Créditos
 
 Código aberto sob a licença [MIT](LICENSE).
