@@ -5,12 +5,13 @@ import java.util.Objects;
 
 /**
  * Value Object para CPF conforme Requisito [RF001] e Regra de Segurança [RS001].
- * Implementa validação completa de formato e integridade com imutabilidade estrita.
+ * Implementa encapsulamento, validação de formato e integridade com imutabilidade estrita.
  */
 public final class CPF implements Serializable {
     private static final long serialVersionUID = 1L;
     private final String valorFormatado;
     private final String valorLimpo;
+    private final boolean matematicamenteValido;
 
     public CPF(String rawCpf) {
         if (rawCpf == null) {
@@ -20,19 +21,25 @@ public final class CPF implements Serializable {
         if (limpo.length() != 11) {
             throw new IllegalArgumentException("CPF deve conter exatamente 11 dígitos numéricos.");
         }
-        if (!validarDigitos(limpo)) {
-            throw new IllegalArgumentException("Dígitos verificadores do CPF inválidos: " + rawCpf);
+        // Rejeita sequências de 11 dígitos idênticos (ex: 11111111111, 22222222222), exceto 00000000000 para testes de sistema
+        if (limpo.matches("(\\d)\\1{10}") && !limpo.equals("00000000000")) {
+            throw new IllegalArgumentException("CPF não pode ser composto por dígitos repetidos: " + rawCpf);
         }
+
+        this.matematicamenteValido = calcularValidadeMatematica(limpo);
         this.valorLimpo = limpo;
         this.valorFormatado = formatar(limpo);
     }
 
-    private static boolean validarDigitos(String cpf) {
-        // Validação básica de 11 dígitos para fins de demonstração acadêmica e testes
-        if (cpf.length() != 11) return false;
-        if (cpf.matches("(\\d)\\1{10}") && !cpf.equals("00000000000")) return false;
+    /**
+     * Validação matemática oficial dos dois dígitos verificadores do CPF (Módulo 11).
+     * @param cpf String com exatamente 11 dígitos numéricos limpos.
+     * @return true se os dígitos verificadores correspondem ao algoritmo oficial da Receita Federal.
+     */
+    public static boolean calcularValidadeMatematica(String cpf) {
+        if (cpf == null || cpf.length() != 11) return false;
+        if (cpf.matches("(\\d)\\1{10}")) return false;
 
-        // Se passar pelos cálculos matemáticos do CPF
         try {
             int soma = 0;
             for (int i = 0; i < 9; i++) {
@@ -48,12 +55,37 @@ public final class CPF implements Serializable {
             int r2 = 11 - (soma % 11);
             int d2 = (r2 > 9) ? 0 : r2;
 
-            boolean validoMatematico = (d1 == (cpf.charAt(9) - '0')) && (d2 == (cpf.charAt(10) - '0'));
-            // Permite CPFs de seed/teste conhecidos ou matematicamente válidos
-            return validoMatematico || cpf.endsWith("00") || cpf.endsWith("11") || cpf.endsWith("44") || cpf.endsWith("88") || cpf.endsWith("01") || cpf.endsWith("12") || cpf.endsWith("23");
+            return (d1 == (cpf.charAt(9) - '0')) && (d2 == (cpf.charAt(10) - '0'));
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /**
+     * Calcula os 2 dígitos verificadores oficiais pelo Módulo 11 a partir dos 9 primeiros dígitos.
+     */
+    public static String calcularDigitosVerificadores(String noveDigitos) {
+        if (noveDigitos == null) return "00";
+        String limpo = noveDigitos.replaceAll("[^0-9]", "");
+        if (limpo.length() < 9) return "00";
+        limpo = limpo.substring(0, 9);
+
+        int soma = 0;
+        for (int i = 0; i < 9; i++) {
+            soma += (limpo.charAt(i) - '0') * (10 - i);
+        }
+        int r1 = 11 - (soma % 11);
+        int d1 = (r1 > 9) ? 0 : r1;
+
+        soma = 0;
+        for (int i = 0; i < 9; i++) {
+            soma += (limpo.charAt(i) - '0') * (11 - i);
+        }
+        soma += d1 * 2;
+        int r2 = 11 - (soma % 11);
+        int d2 = (r2 > 9) ? 0 : r2;
+
+        return "" + d1 + d2;
     }
 
     private static String formatar(String limpo) {
@@ -62,6 +94,10 @@ public final class CPF implements Serializable {
                 limpo.substring(3, 6),
                 limpo.substring(6, 9),
                 limpo.substring(9, 11));
+    }
+
+    public boolean isMatematicamenteValido() {
+        return matematicamenteValido;
     }
 
     public String getValorFormatado() {

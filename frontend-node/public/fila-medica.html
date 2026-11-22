@@ -244,6 +244,22 @@
             try {
                 const res = await fetch('/api/fila');
                 filaAtual = await res.json();
+
+                // Ordenação por prioridade: Vermelho > Laranja > Amarelo > Verde > Azul
+                const PESO_PRIORIDADE = {
+                    'VERMELHO': 1,
+                    'LARANJA': 2,
+                    'AMARELO': 3,
+                    'VERDE': 4,
+                    'AZUL': 5
+                };
+                filaAtual.sort((a, b) => {
+                    const pesoA = PESO_PRIORIDADE[(a.corManchester || '').toUpperCase()] || 99;
+                    const pesoB = PESO_PRIORIDADE[(b.corManchester || '').toUpperCase()] || 99;
+                    if (pesoA !== pesoB) return pesoA - pesoB;
+                    return (a.atendimentoId || 0) - (b.atendimentoId || 0);
+                });
+
                 renderizarFila();
             } catch (err) {
                 console.error('Erro ao consultar fila:', err);

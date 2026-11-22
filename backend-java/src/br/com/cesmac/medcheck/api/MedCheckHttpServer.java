@@ -128,6 +128,8 @@ public class MedCheckHttpServer {
                 try {
                     String body = lerCorpo(exchange);
                     Map<String, String> p = extrairJsonSimples(body);
+                    String prioridade = p.getOrDefault("prioridadeManchester", p.getOrDefault("prioridade", ""));
+                    String queixa = p.getOrDefault("queixa", "");
                     Paciente pac = clinicaService.cadastrarPaciente(
                             p.get("nome"),
                             p.get("cpf"),
@@ -142,7 +144,9 @@ public class MedCheckHttpServer {
                             p.getOrDefault("doencasCronicas", ""),
                             Boolean.parseBoolean(p.getOrDefault("cardiopatia", "false")),
                             Boolean.parseBoolean(p.getOrDefault("diabetes", "false")),
-                            p.getOrDefault("historicoFamiliar", "")
+                            p.getOrDefault("historicoFamiliar", ""),
+                            prioridade,
+                            queixa
                     );
                     enviarJson(exchange, 201, "{\"sucesso\":true,\"id\":" + pac.getId() + ",\"mensagem\":\"Paciente cadastrado com sucesso!\"}");
                 } catch (Exception e) {
@@ -275,8 +279,9 @@ public class MedCheckHttpServer {
                 try {
                     String body = lerCorpo(exchange);
                     Map<String, String> p = extrairJsonSimples(body);
-                    int atendimentoId = Integer.parseInt(p.get("atendimentoId"));
-                    int medicoId = Integer.parseInt(p.get("medicoId"));
+                    int atendimentoId = Integer.parseInt(p.getOrDefault("atendimentoId", "0"));
+                    int pacienteId = Integer.parseInt(p.getOrDefault("pacienteId", "0"));
+                    int medicoId = Integer.parseInt(p.getOrDefault("medicoId", "2"));
                     String observacoes = p.getOrDefault("observacoes", "");
                     boolean confirmacaoAlergia = Boolean.parseBoolean(p.getOrDefault("confirmacaoAlergia", "false"));
 
@@ -293,7 +298,7 @@ public class MedCheckHttpServer {
                         itens.add(new ItemReceita(medNome, principio, dosagem, posologia, qtd, via));
                     }
 
-                    ReceitaMedica receita = receitaService.emitirReceita(atendimentoId, medicoId, itens, observacoes, confirmacaoAlergia);
+                    ReceitaMedica receita = receitaService.emitirReceita(atendimentoId, pacienteId, medicoId, itens, observacoes, confirmacaoAlergia);
 
                     StringBuilder sb = new StringBuilder("{");
                     sb.append("\"sucesso\":true,");

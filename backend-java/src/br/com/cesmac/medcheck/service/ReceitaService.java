@@ -23,7 +23,7 @@ public class ReceitaService {
     /**
      * Emite receita médica com checagem rigorosa de alérgenos [RS007] e perfil [RS002].
      */
-    public ReceitaMedica emitirReceita(Integer atendimentoId, Integer medicoId,
+    public ReceitaMedica emitirReceita(Integer atendimentoId, Integer pacienteId, Integer medicoId,
                                       List<ItemReceita> itens, String observacoes, boolean confirmacaoExplicitaAlergia) {
         // 1. Verificação de Perfil Médico
         Usuario usuario = dataStore.buscarUsuarioPorId(medicoId);
@@ -31,12 +31,24 @@ public class ReceitaService {
             throw new SecurityException("Apenas profissionais médicos autenticados com registro profissional ativo podem emitir prescrições.");
         }
 
-        AtendimentoMedico atendimento = dataStore.buscarAtendimentoPorId(atendimentoId);
-        if (atendimento == null) {
-            throw new IllegalArgumentException("Atendimento médico não encontrado.");
+        if ((pacienteId == null || pacienteId <= 0) && atendimentoId != null && atendimentoId > 0) {
+            AtendimentoMedico atendimento = dataStore.buscarAtendimentoPorId(atendimentoId);
+            if (atendimento != null) {
+                pacienteId = atendimento.getPacienteId();
+            }
         }
 
-        Integer pacienteId = atendimento.getPacienteId();
+        if (pacienteId == null || pacienteId <= 0) {
+            throw new IllegalArgumentException("Paciente destinatário não identificado.");
+        }
+
+        if (atendimentoId == null || atendimentoId <= 0) {
+            atendimentoId = dataStore.gerarProximoIdAtendimento();
+            AtendimentoMedico novoAtendimento = new AtendimentoMedico(atendimentoId, null, pacienteId);
+            novoAtendimento.assumirAtendimento(medicoId);
+            dataStore.salvarAtendimento(novoAtendimento);
+        }
+
         HistoricoClinico historico = dataStore.buscarHistoricoPorPaciente(pacienteId);
 
         // 2. Verificação Cruzada de Alergias
@@ -67,6 +79,11 @@ public class ReceitaService {
         dataStore.registrarLog(new LogAuditoria(null, medicoId, pacienteId, "RECEITA", "INSERCAO",
                 "Receita #" + receitaId + " emitida com Hash: " + receita.getHashValidacao(), "127.0.0.1"));
         return receita;
+    }
+
+    public ReceitaMedica emitirReceita(Integer atendimentoId, Integer medicoId,
+                                      List<ItemReceita> itens, String observacoes, boolean confirmacaoExplicitaAlergia) {
+        return emitirReceita(atendimentoId, null, medicoId, itens, observacoes, confirmacaoExplicitaAlergia);
     }
 
     /**

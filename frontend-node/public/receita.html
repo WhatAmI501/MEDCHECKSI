@@ -199,16 +199,14 @@
                 <div class="form-group">
                     <label>Paciente Destinatário:</label>
                     <select id="rec-paciente" onchange="atualizarAvisosAlergia()">
-                        <option value="4" data-alergias="Dipirona, Anti-inflamatórios não esteroides (AINE)">Mariana Oliveira Costa (Alergia a Dipirona)</option>
-                        <option value="5" data-alergias="Penicilina, Amoxicilina">José Ferreira dos Santos (Alergia a Penicilina)</option>
-                        <option value="6" data-alergias="">Ana Beatriz Lima (Sem histórico de alergias)</option>
+                        <option value="" disabled selected>Carregando pacientes cadastrados...</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label>Alergias Identificadas no Prontuário:</label>
-                    <div id="badge-alergias-paciente" style="background-color: var(--m-vermelho-bg); border: 1px solid var(--m-vermelho-border); padding: 0.45rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.8125rem; color: var(--m-vermelho-text); font-weight: 700;">
-                        Dipirona, Anti-inflamatórios não esteroides (AINE)
+                    <label>Status de Alergia no Prontuário:</label>
+                    <div id="badge-alergias-paciente" style="padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.8125rem; font-weight: 600; transition: all 0.2s ease;">
+                        Carregando informações do paciente...
                     </div>
                 </div>
 
@@ -309,11 +307,93 @@
     <script>
         let ultimoHashEmitido = '';
 
+        async function carregarPacientesPrescricao() {
+            const select = document.getElementById('rec-paciente');
+            try {
+                const res = await fetch('/api/pacientes');
+                const pacientes = await res.json();
+                select.innerHTML = '';
+
+                if (!pacientes || pacientes.length === 0) {
+                    select.innerHTML = '<option value="">Nenhum paciente cadastrado</option>';
+                    atualizarAvisosAlergia();
+                    return;
+                }
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const pacienteUrlId = urlParams.get('pacienteId');
+
+                pacientes.forEach((p, index) => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    const temAlergia = p.alergias && p.alergias.trim() !== '' && p.alergias.trim().toLowerCase() !== 'nenhuma';
+                    opt.setAttribute('data-alergias', temAlergia ? p.alergias.trim() : '');
+                    
+                    if (temAlergia) {
+                        opt.textContent = `${p.nome} (Alergia: ${p.alergias.trim()})`;
+                    } else {
+                        opt.textContent = `${p.nome} (Sem histórico de alergias)`;
+                    }
+
+                    if (pacienteUrlId && String(p.id) === String(pacienteUrlId)) {
+                        opt.selected = true;
+                    } else if (!pacienteUrlId && index === 0) {
+                        opt.selected = true;
+                    }
+                    select.appendChild(opt);
+                });
+
+                atualizarAvisosAlergia();
+            } catch (err) {
+                console.error('Erro ao carregar pacientes:', err);
+                select.innerHTML = '<option value="">Erro ao carregar pacientes</option>';
+            }
+        }
+
         function atualizarAvisosAlergia() {
             const select = document.getElementById('rec-paciente');
-            const alergias = select.options[select.selectedIndex].getAttribute('data-alergias');
-            document.getElementById('badge-alergias-paciente').innerText = alergias || 'Nenhuma alergia conhecida no prontuário';
-            document.getElementById('alerta-conflito-alergia').style.display = 'none';
+            const badge = document.getElementById('badge-alergias-paciente');
+            const alertBox = document.getElementById('alerta-conflito-alergia');
+            if (alertBox) alertBox.style.display = 'none';
+
+            if (!select || !select.options || select.selectedIndex < 0) {
+                badge.style.backgroundColor = 'var(--bg-subtle)';
+                badge.style.border = '1px solid var(--border-subtle)';
+                badge.style.color = 'var(--text-muted)';
+                badge.innerHTML = 'Nenhum paciente selecionado.';
+                return;
+            }
+
+            const opt = select.options[select.selectedIndex];
+            const alergias = (opt.getAttribute('data-alergias') || '').trim();
+
+            if (alergias && alergias.toLowerCase() !== 'nenhuma') {
+                badge.style.backgroundColor = 'var(--m-vermelho-bg)';
+                badge.style.border = '1px solid var(--m-vermelho-border)';
+                badge.style.color = 'var(--m-vermelho-text)';
+                badge.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 0.4rem; font-weight: 700;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        <span>Alergias Identificadas: ${alergias}</span>
+                    </div>
+                    <div style="font-size: 0.75rem; margin-top: 0.35rem; font-weight: 500; opacity: 0.95;">
+                        Atenção: O sistema bloqueará automaticamente qualquer prescrição com princípios ativos conflitantes.
+                    </div>
+                `;
+            } else {
+                badge.style.backgroundColor = 'var(--m-verde-bg)';
+                badge.style.border = '1px solid var(--m-verde-border)';
+                badge.style.color = 'var(--m-verde-text)';
+                badge.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 0.4rem; font-weight: 700;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        <span>Sem Histórico de Alergias Declaradas</span>
+                    </div>
+                    <div style="font-size: 0.75rem; margin-top: 0.35rem; font-weight: 500; opacity: 0.95;">
+                        Nenhuma hipersensibilidade medicamentosa registrada no prontuário deste paciente.
+                    </div>
+                `;
+            }
         }
 
         async function emitirReceita() {
@@ -331,7 +411,8 @@
             }
 
             const payload = {
-                atendimentoId: 1,
+                pacienteId: pacienteId,
+                atendimentoId: 0,
                 medicoId: 2,
                 medicamento: medicamento,
                 principioAtivo: principioAtivo,
@@ -407,6 +488,8 @@
                 alert('Código Hash copiado para a área de transferência.');
             }
         }
+
+        window.onload = carregarPacientesPrescricao;
     </script>
 </body>
 </html>

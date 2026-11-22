@@ -1,26 +1,31 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MEDCHECK — Triagem Clínica com Inteligência Artificial</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
     <script src="/theme.js"></script>
 </head>
+
 <body>
     <div class="app-layout">
         <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
-        
+
         <!-- Menu Lateral (Sidebar) com Padrão Corporativo Moderno -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <a href="/" class="brand">
                     <div class="brand-icon">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
                         </svg>
                     </div>
                     <div class="brand-info">
@@ -34,37 +39,65 @@
                 <ul>
                     <li>
                         <a href="/" class="nav-link">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="7" height="7" />
+                                <rect x="14" y="3" width="7" height="7" />
+                                <rect x="14" y="14" width="7" height="7" />
+                                <rect x="3" y="14" width="7" height="7" />
+                            </svg>
                             <span>Painel Geral</span>
                         </a>
                     </li>
                     <li>
                         <a href="/triagem.html" class="nav-link active">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                            </svg>
                             <span>Triagem Virtual</span>
                         </a>
                     </li>
                     <li>
                         <a href="/fila-medica.html" class="nav-link">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                            </svg>
                             <span>Fila Priorizada</span>
                         </a>
                     </li>
                     <li>
                         <a href="/receita.html" class="nav-link">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" />
+                                <path d="m8.5 8.5 7 7" />
+                            </svg>
                             <span>Prescrição & QR</span>
                         </a>
                     </li>
                     <li>
                         <a href="/pacientes.html" class="nav-link">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <line x1="19" y1="8" x2="19" y2="14" />
+                                <line x1="22" y1="11" x2="16" y2="11" />
+                            </svg>
                             <span>Pacientes</span>
                         </a>
                     </li>
                     <li>
                         <a href="/auditoria.html" class="nav-link">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                            </svg>
                             <span>Auditoria & Logs</span>
                         </a>
                     </li>
@@ -74,7 +107,11 @@
             <div class="sidebar-footer">
                 <div class="user-card-sidebar">
                     <div class="user-avatar-circle">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
                     </div>
                     <div class="user-info-sidebar">
                         <div class="user-name-sidebar">Dr. Roberto Silva</div>
@@ -88,8 +125,9 @@
                 <div class="sidebar-theme-row">
                     <button class="theme-switch-btn" onclick="toggleTheme()" aria-label="Alternar modo claro ou escuro">
                         <span class="theme-switch-label">
-                            <svg id="sidebar-theme-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                            <svg id="sidebar-theme-icon" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
                             </svg>
                             <span id="sidebar-theme-text">Tema Escuro</span>
                         </span>
@@ -105,40 +143,66 @@
         <div class="main-content-wrapper">
             <header class="topbar">
                 <div class="topbar-left">
-                    <button class="menu-toggle-btn" id="menu-toggle" aria-label="Abrir menu lateral" onclick="toggleSidebar()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+                    <button class="menu-toggle-btn" id="menu-toggle" aria-label="Abrir menu lateral"
+                        onclick="toggleSidebar()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="3" y1="12" x2="21" y2="12" />
+                            <line x1="3" y1="6" x2="21" y2="6" />
+                            <line x1="3" y1="18" x2="21" y2="18" />
                         </svg>
                     </button>
                     <div class="global-search-bar">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
                         </svg>
-                        <input type="text" placeholder="Busca clínica rápida (Paciente, CPF ou Protocolo)..." aria-label="Busca clínica">
+                        <input type="text" placeholder="Busca clínica rápida (Paciente, CPF ou Protocolo)..."
+                            aria-label="Busca clínica">
                     </div>
                 </div>
 
                 <div class="topbar-right">
                     <div class="topbar-badge">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
                         <span>MÉDICO PLANTONISTA</span>
                     </div>
 
                     <div class="topbar-theme-toggle">
-                        <button class="topbar-icon-btn" id="theme-toggle-topbar" onclick="toggleTheme()" title="Alternar tema claro/escuro" aria-label="Alternar tema claro/escuro">
-                            <svg id="theme-icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                        <button class="topbar-icon-btn" id="theme-toggle-topbar" onclick="toggleTheme()"
+                            title="Alternar tema claro/escuro" aria-label="Alternar tema claro/escuro">
+                            <svg id="theme-icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
                             </svg>
-                            <svg id="theme-icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
-                                <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                            <svg id="theme-icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                style="display: none;">
+                                <circle cx="12" cy="12" r="5" />
+                                <line x1="12" y1="1" x2="12" y2="3" />
+                                <line x1="12" y1="21" x2="12" y2="23" />
+                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                                <line x1="1" y1="12" x2="3" y2="12" />
+                                <line x1="21" y1="12" x2="23" y2="12" />
+                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
                             </svg>
                         </button>
                     </div>
 
                     <div class="topbar-notification">
-                        <button class="topbar-icon-btn" title="Alertas de Emergência" aria-label="Alertas de Emergência">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                        <button class="topbar-icon-btn" title="Alertas de Emergência"
+                            aria-label="Alertas de Emergência">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                             </svg>
                             <span class="notification-dot"></span>
                         </button>
@@ -146,8 +210,10 @@
 
                     <div class="topbar-user">
                         <div class="user-avatar-circle small">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
                             </svg>
                         </div>
                         <div class="topbar-user-info">
@@ -159,136 +225,177 @@
             </header>
 
             <main>
-        <!-- Cabeçalho da Página com Hierarquia Semântica -->
-        <div class="page-header" style="margin-bottom: 1.25rem;">
-            <h2 class="page-title">Triagem Virtual & Classificação de Risco</h2>
-            <p class="page-subtitle">Acolhimento humanizado, coleta inteligente de sintomas e classificação imediata segundo o Protocolo de Manchester.</p>
-        </div>
+                <!-- Cabeçalho da Página com Hierarquia Semântica -->
+                <div class="page-header" style="margin-bottom: 1.25rem;">
+                    <h2 class="page-title">Triagem Virtual & Classificação de Risco</h2>
+                    <p class="page-subtitle">Acolhimento humanizado, coleta inteligente de sintomas e classificação
+                        imediata segundo o Protocolo de Manchester.</p>
+                </div>
 
-        <!-- Aviso Clínico Informativo -->
-        <div class="alert-banner alert-info">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <div style="font-size: 0.875rem; line-height: 1.45;">
-                <strong>Acolhimento Preliminar:</strong> A triagem virtual investiga os sintomas relatados para sugerir a prioridade clínica conforme a árvore de decisão do Protocolo de Manchester. Em situações de dor súbita insuportável no peito, perda de sentidos ou falta de ar grave, dirija-se imediatamente à emergência médica presencial mais próxima.
-            </div>
-        </div>
+                <!-- Aviso Clínico Informativo -->
+                <div class="alert-banner alert-info">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px;">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="16" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12.01" y2="8" />
+                    </svg>
+                    <div style="font-size: 0.875rem; line-height: 1.45;">
+                        <strong>Acolhimento Preliminar:</strong> A triagem virtual investiga os sintomas relatados para
+                        sugerir a prioridade clínica conforme a árvore de decisão do Protocolo de Manchester. Em
+                        situações de dor súbita insuportável no peito, perda de sentidos ou falta de ar grave, dirija-se
+                        imediatamente à emergência médica presencial mais próxima.
+                    </div>
+                </div>
 
-        <div class="grid grid-cols-3">
-            <!-- Coluna Principal: Chat de Triagem -->
-            <div style="grid-column: span 2;">
-                <div class="card" style="padding: 1.25rem;">
-                    <div class="card-header">
-                        <div>
-                            <h3 class="card-title">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                                Entrevista Clínica Guiada
-                            </h3>
-                            <p style="font-size: 0.8125rem; color: var(--text-muted); margin-top: 0.2rem;">Investigação dinâmica de localização, intensidade e sintomas associados</p>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <label for="select-paciente" style="margin: 0; font-size: 0.8125rem;">Paciente em Atendimento:</label>
-                            <select id="select-paciente" style="width: auto; padding: 0.35rem 0.65rem; font-size: 0.8125rem;">
-                                <option value="5">José Ferreira (Cardiopatia e Hipertensão)</option>
-                                <option value="4">Mariana Costa (Histórico de Alergias)</option>
-                                <option value="6">Ana Beatriz Lima (Sem comorbidades)</option>
-                            </select>
+                <div class="grid grid-cols-3">
+                    <!-- Coluna Principal: Chat de Triagem -->
+                    <div style="grid-column: span 2;">
+                        <div class="card" style="padding: 1.25rem;">
+                            <div class="card-header">
+                                <div>
+                                    <h3 class="card-title">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                        </svg>
+                                        Entrevista Clínica Guiada
+                                    </h3>
+                                    <p style="font-size: 0.8125rem; color: var(--text-muted); margin-top: 0.2rem;">
+                                        Investigação dinâmica de localização, intensidade e sintomas associados</p>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <label for="select-paciente" style="margin: 0; font-size: 0.8125rem;">Paciente em
+                                        Atendimento:</label>
+                                    <select id="select-paciente"
+                                        style="width: auto; padding: 0.35rem 0.65rem; font-size: 0.8125rem; font-weight: 600;">
+                                        <option value="" disabled selected>Carregando pacientes cadastrados...</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="chat-window">
+                                <div class="chat-messages" id="chat-messages">
+                                    <!-- Diálogo gerado dinamicamente -->
+                                </div>
+
+                                <!-- Chips de Respostas Rápidas para Maior Agilidade -->
+                                <div class="quick-chips-bar">
+                                    <span
+                                        style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); align-self: center; margin-right: 0.25rem;">Sugestões:</span>
+                                    <button class="chip-btn"
+                                        onclick="inserirChip('Estou sentindo uma dor no peito forte que vai para o braço esquerdo')">Dor
+                                        no Peito / Braço</button>
+                                    <button class="chip-btn"
+                                        onclick="inserirChip('Muita falta de ar e cansaço mesmo em repouso')">Falta de
+                                        Ar</button>
+                                    <button class="chip-btn"
+                                        onclick="inserirChip('Dor de cabeça muito forte acompanhada de febre e sensibilidade à luz')">Cefaleia
+                                        com Febre</button>
+                                    <button class="chip-btn"
+                                        onclick="inserirChip('Dor de garganta leve e coriza há alguns dias')">Dor de
+                                        Garganta Leve</button>
+                                </div>
+
+                                <div class="chat-input-row">
+                                    <input type="text" id="chat-input"
+                                        placeholder="Digite seus sintomas detalhadamente..."
+                                        onkeypress="handleEnter(event)">
+                                    <button class="btn btn-primary" id="btn-enviar" onclick="enviarMensagem()">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <line x1="22" y1="2" x2="11" y2="13" />
+                                            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                                        </svg>
+                                        Enviar
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="chat-window">
-                        <div class="chat-messages" id="chat-messages">
-                            <!-- Diálogo gerado dinamicamente -->
-                        </div>
+                    <!-- Coluna Lateral: Parâmetros Vitais e Resultado Manchester -->
+                    <div>
+                        <div class="card" style="margin-bottom: 1.25rem;">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                                    </svg>
+                                    Sinais Vitais Mensurados
+                                </h3>
+                            </div>
+                            <p style="font-size: 0.8125rem; color: var(--text-muted); margin-bottom: 1rem;">
+                                Caso tenha medidores em casa, preencha os parâmetros abaixo para refinar a precisão da
+                                estratificação de risco:
+                            </p>
 
-                        <!-- Chips de Respostas Rápidas para Maior Agilidade -->
-                        <div class="quick-chips-bar">
-                            <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); align-self: center; margin-right: 0.25rem;">Sugestões:</span>
-                            <button class="chip-btn" onclick="inserirChip('Estou sentindo uma dor no peito forte que vai para o braço esquerdo')">Dor no Peito / Braço</button>
-                            <button class="chip-btn" onclick="inserirChip('Muita falta de ar e cansaço mesmo em repouso')">Falta de Ar</button>
-                            <button class="chip-btn" onclick="inserirChip('Dor de cabeça muito forte acompanhada de febre e sensibilidade à luz')">Cefaleia com Febre</button>
-                            <button class="chip-btn" onclick="inserirChip('Dor de garganta leve e coriza há alguns dias')">Dor de Garganta Leve</button>
-                        </div>
+                            <div class="form-group">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <label>Temperatura Corporal (°C):</label>
+                                    <span style="font-size: 0.75rem; color: var(--text-muted);">Normal: 36.0 -
+                                        37.5°C</span>
+                                </div>
+                                <input type="number" id="vital-temp" step="0.1" placeholder="Ex: 37.8">
+                            </div>
 
-                        <div class="chat-input-row">
-                            <input type="text" id="chat-input" placeholder="Digite seus sintomas detalhadamente..." onkeypress="handleEnter(event)">
-                            <button class="btn btn-primary" id="btn-enviar" onclick="enviarMensagem()">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                                Enviar
+                            <div style="display: flex; gap: 0.5rem;">
+                                <div class="form-group" style="flex: 1;">
+                                    <label>PA Sistólica (mmHg):</label>
+                                    <input type="number" id="vital-pa-sis" placeholder="120">
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <label>PA Diastólica (mmHg):</label>
+                                    <input type="number" id="vital-pa-dia" placeholder="80">
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 0.5rem;">
+                                <div class="form-group" style="flex: 1;">
+                                    <div style="display: flex; justify-content: space-between;">
+                                        <label>SpO₂ (% O₂):</label>
+                                    </div>
+                                    <input type="number" id="vital-spo2" placeholder="Ex: 98">
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <label>Frequência (bpm):</label>
+                                    <input type="number" id="vital-fc" placeholder="Ex: 75">
+                                </div>
+                            </div>
+
+                            <button class="btn btn-secondary" style="width: 100%; font-size: 0.8125rem;"
+                                onclick="aplicarVitaisRapidos()">
+                                Registrar Parâmetros Vitais
                             </button>
                         </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Coluna Lateral: Parâmetros Vitais e Resultado Manchester -->
-            <div>
-                <div class="card" style="margin-bottom: 1.25rem;">
-                    <div class="card-header">
-                        <h3 class="card-title">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                            Sinais Vitais Mensurados
-                        </h3>
-                    </div>
-                    <p style="font-size: 0.8125rem; color: var(--text-muted); margin-bottom: 1rem;">
-                        Caso tenha medidores em casa, preencha os parâmetros abaixo para refinar a precisão da estratificação de risco:
-                    </p>
-                    
-                    <div class="form-group">
-                        <div style="display: flex; justify-content: space-between;">
-                            <label>Temperatura Corporal (°C):</label>
-                            <span style="font-size: 0.75rem; color: var(--text-muted);">Normal: 36.0 - 37.5°C</span>
-                        </div>
-                        <input type="number" id="vital-temp" step="0.1" placeholder="Ex: 37.8">
-                    </div>
-
-                    <div style="display: flex; gap: 0.5rem;">
-                        <div class="form-group" style="flex: 1;">
-                            <label>PA Sistólica (mmHg):</label>
-                            <input type="number" id="vital-pa-sis" placeholder="120">
-                        </div>
-                        <div class="form-group" style="flex: 1;">
-                            <label>PA Diastólica (mmHg):</label>
-                            <input type="number" id="vital-pa-dia" placeholder="80">
-                        </div>
-                    </div>
-
-                    <div style="display: flex; gap: 0.5rem;">
-                        <div class="form-group" style="flex: 1;">
-                            <div style="display: flex; justify-content: space-between;">
-                                <label>SpO₂ (% O₂):</label>
+                        <!-- Painel com Resultado Manchester (Preenchido no encerramento da triagem) -->
+                        <div class="card" id="card-resultado" style="display: none;">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <polyline points="12 6 12 12 14 14" />
+                                    </svg>
+                                    Resultado da Classificação Clínica
+                                </h3>
                             </div>
-                            <input type="number" id="vital-spo2" placeholder="Ex: 98">
-                        </div>
-                        <div class="form-group" style="flex: 1;">
-                            <label>Frequência (bpm):</label>
-                            <input type="number" id="vital-fc" placeholder="Ex: 75">
+                            <div id="resultado-conteudo">
+                                <!-- Conteúdo injetado dinamicamente -->
+                            </div>
                         </div>
                     </div>
-
-                    <button class="btn btn-secondary" style="width: 100%; font-size: 0.8125rem;" onclick="aplicarVitaisRapidos()">
-                        Registrar Parâmetros Vitais
-                    </button>
                 </div>
+            </main>
 
-                <!-- Painel com Resultado Manchester (Preenchido no encerramento da triagem) -->
-                <div class="card" id="card-resultado" style="display: none;">
-                    <div class="card-header">
-                        <h3 class="card-title">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
-                            Resultado da Classificação Clínica
-                        </h3>
-                    </div>
-                    <div id="resultado-conteudo">
-                        <!-- Conteúdo injetado dinamicamente -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <footer>
-        MEDCHECK (MedIA) • Protocolo de Manchester Determinístico • Separação Arquitetural entre IA e Classificação
-    </footer>
+            <footer>
+                MEDCHECK (MedIA) • Protocolo de Manchester Determinístico • Separação Arquitetural entre IA e
+                Classificação
+            </footer>
         </div>
     </div>
 
@@ -301,7 +408,7 @@
             chatMessages.innerHTML = '';
             chatStep = 0;
             chatContext = {};
-            
+
             const res = await fetch('/api/chat-ia', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -447,7 +554,48 @@
             `;
         }
 
-        window.onload = inicializarChat;
+        async function carregarPacientesTriagem() {
+            const select = document.getElementById('select-paciente');
+            try {
+                const res = await fetch('/api/pacientes');
+                const pacientes = await res.json();
+                select.innerHTML = '';
+
+                if (!pacientes || pacientes.length === 0) {
+                    select.innerHTML = '<option value="">Nenhum paciente cadastrado</option>';
+                    return;
+                }
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const pacienteUrlId = urlParams.get('pacienteId');
+
+                pacientes.forEach((p, index) => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    const detalhes = [];
+                    if (p.doencasCronicas && p.doencasCronicas.trim()) detalhes.push(p.doencasCronicas.trim());
+                    if (p.alergias && p.alergias.trim() && p.alergias.toLowerCase() !== 'nenhuma') detalhes.push('Alergia: ' + p.alergias.trim());
+                    const info = detalhes.length > 0 ? ` (${detalhes.join(' • ')})` : ' (Sem comorbidades)';
+                    opt.textContent = `${p.nome}${info}`;
+
+                    if (pacienteUrlId && String(p.id) === String(pacienteUrlId)) {
+                        opt.selected = true;
+                    } else if (!pacienteUrlId && index === 0) {
+                        opt.selected = true;
+                    }
+                    select.appendChild(opt);
+                });
+            } catch (err) {
+                console.error('Erro ao carregar pacientes na triagem:', err);
+                select.innerHTML = '<option value="">Erro ao carregar pacientes</option>';
+            }
+        }
+
+        window.onload = () => {
+            carregarPacientesTriagem();
+            inicializarChat();
+        };
     </script>
 </body>
+
 </html>

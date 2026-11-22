@@ -33,7 +33,18 @@ public class MedCheckCoreTest {
         System.out.print("[TESTE 1] Encapsulamento de CPF e Validação Invariante: ");
         try {
             CPF cpf = new CPF("123.456.789-01");
-            if (cpf.getValorLimpo().equals("12345678901") && cpf.getValorFormatado().equals("123.456.789-01")) {
+            CPF cpfTerminacaoLivre = new CPF("123.456.789-50");
+            CPF cpfTerminacao99 = new CPF("987.654.321-99");
+            boolean rejeitouRepetido = false;
+            try {
+                new CPF("111.111.111-11");
+            } catch (IllegalArgumentException e) {
+                rejeitouRepetido = true;
+            }
+            if (cpf.getValorLimpo().equals("12345678901") && cpf.getValorFormatado().equals("123.456.789-01") 
+                && cpfTerminacaoLivre.getValorFormatado().equals("123.456.789-50")
+                && cpfTerminacao99.getValorFormatado().equals("987.654.321-99")
+                && rejeitouRepetido) {
                 testesAprovados++;
                 System.out.println("✔ APROVADO");
             } else {

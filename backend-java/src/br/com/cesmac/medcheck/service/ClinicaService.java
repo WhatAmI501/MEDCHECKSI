@@ -3,6 +3,7 @@ package br.com.cesmac.medcheck.service;
 import br.com.cesmac.medcheck.model.*;
 import br.com.cesmac.medcheck.model.enums.CorManchester;
 import br.com.cesmac.medcheck.model.enums.IntensidadeSintoma;
+import br.com.cesmac.medcheck.model.enums.NivelPrioridade;
 import br.com.cesmac.medcheck.model.enums.StatusAtendimento;
 import br.com.cesmac.medcheck.model.enums.StatusTriagem;
 import br.com.cesmac.medcheck.model.valueobjects.CPF;
@@ -31,6 +32,15 @@ public class ClinicaService {
                                      LocalDate dataNasc, String sexo, String telefone,
                                      Double peso, Double altura, String alergias, String doencasCronicas,
                                      boolean cardiopatia, boolean diabetes, String historicoFamiliar) {
+        return cadastrarPaciente(nome, cpfStr, email, senha, dataNasc, sexo, telefone, peso, altura,
+                alergias, doencasCronicas, cardiopatia, diabetes, historicoFamiliar, null, null);
+    }
+
+    public Paciente cadastrarPaciente(String nome, String cpfStr, String email, String senha,
+                                     LocalDate dataNasc, String sexo, String telefone,
+                                     Double peso, Double altura, String alergias, String doencasCronicas,
+                                     boolean cardiopatia, boolean diabetes, String historicoFamiliar,
+                                     String prioridadeManchester, String queixaInformada) {
         CPF cpf = new CPF(cpfStr);
         if (dataStore.buscarUsuarioPorCpf(cpf.getValorLimpo()) != null) {
             throw new IllegalArgumentException("CPF já cadastrado no sistema.");
@@ -50,7 +60,84 @@ public class ClinicaService {
 
         dataStore.salvarPaciente(paciente, hist);
         dataStore.registrarLog(new LogAuditoria(null, paciente.getId(), paciente.getId(), "PACIENTE", "INSERCAO", "Cadastro realizado", "127.0.0.1"));
+
+        // Enfileira o paciente automaticamente na Fila Priorizada com a cor e prioridade selecionadas
+        if (prioridadeManchester != null && !prioridadeManchester.trim().isEmpty()) {
+            enfileirarPacienteComPrioridade(paciente.getId(), prioridadeManchester.trim().toUpperCase(), queixaInformada);
+        }
+
         return paciente;
+    }
+
+    private void enfileirarPacienteComPrioridade(Integer pacienteId, String corStr, String queixaInformada) {
+        CorManchester cor;
+        NivelPrioridade prioridade;
+        int tempoAlvo;
+        String orientacao;
+
+        switch (corStr) {
+            case "VERMELHO":
+                cor = CorManchester.VERMELHO;
+                prioridade = NivelPrioridade.EMERGENCIA;
+                tempoAlvo = 0;
+                orientacao = "Emergência imediata — Encaminhamento crítico ou suporte avançado SAMU 192.";
+                break;
+            case "LARANJA":
+                cor = CorManchester.LARANJA;
+                prioridade = NivelPrioridade.MUITO_URGENTE;
+                tempoAlvo = 10;
+                orientacao = "Caso muito urgente — Atendimento clínico prioritário em até 10 minutos.";
+                break;
+            case "AMARELO":
+                cor = CorManchester.AMARELO;
+                prioridade = NivelPrioridade.URGENTE;
+                tempoAlvo = 50;
+                orientacao = "Caso urgente — Teleconsulta prioritária em até 50 minutos.";
+                break;
+            case "VERDE":
+                cor = CorManchester.VERDE;
+                prioridade = NivelPrioridade.POUCO_URGENTE;
+                tempoAlvo = 120;
+                orientacao = "Caso pouco urgente — Atendimento ambulatorial em até 120 minutos.";
+                break;
+            case "AZUL":
+            default:
+                cor = CorManchester.AZUL;
+                prioridade = NivelPrioridade.NAO_URGENTE;
+                tempoAlvo = 240;
+                orientacao = "Caso não urgente — Acolhimento e orientação em até 240 minutos.";
+                break;
+        }
+
+        String queixaFinal = (queixaInformada != null && !queixaInformada.trim().isEmpty())
+                ? queixaInformada.trim()
+                : "Acolhimento clínico de triagem (" + cor.getRotulo() + ")";
+
+        int triagemId = dataStore.gerarProximoIdTriagem();
+        Triagem triagem = new Triagem(triagemId, pacienteId, queixaFinal);
+        triagem.setLocalSintoma("Geral / Acolhimento cadastral");
+        triagem.setIntensidade(IntensidadeSintoma.MODERADA);
+        triagem.setDuracaoInicio("Início recente");
+
+        ClassificacaoRisco classificacao = new ClassificacaoRisco(
+                dataStore.gerarProximoIdClassificacao(),
+                triagemId,
+                prioridade,
+                cor,
+                orientacao,
+                "Teleatendimento regulado conforme Protocolo de Manchester.",
+                "Piora súbita dos sintomas ou alteração do estado de consciência."
+        );
+        classificacao.adicionarDiscriminador("Classificação atribuída no cadastro: " + cor.getRotulo());
+        dataStore.salvarClassificacao(classificacao);
+        triagem.setClassificacaoRisco(classificacao);
+        triagem.concluirTriagem("Classificado no cadastro como " + cor.getRotulo());
+        dataStore.salvarTriagem(triagem);
+
+        AtendimentoMedico atendimento = new AtendimentoMedico(dataStore.gerarProximoIdAtendimento(), triagemId, pacienteId);
+        dataStore.salvarAtendimento(atendimento);
+        dataStore.registrarLog(new LogAuditoria(null, pacienteId, pacienteId, "ATENDIMENTO", "INSERCAO",
+                "Paciente enfileirado na Fila Priorizada com prioridade " + cor.name(), "127.0.0.1"));
     }
 
     public Triagem realizarTriagemEClassificacao(Integer pacienteId, String queixa, String local,
@@ -136,7 +223,8 @@ public class ClinicaService {
                     item.put("dataHoraInicio", a.getDataHoraInicio() != null ? a.getDataHoraInicio().toString() : "");
                     return item;
                 })
-                .sorted(Comparator.comparingInt(m -> (int) m.get("prioridadeOrdem")))
+                .sorted(Comparator.<Map<String, Object>>comparingInt(m -> (int) m.get("prioridadeOrdem"))
+                        .thenComparingInt(m -> (int) m.get("atendimentoId")))
                 .collect(Collectors.toList());
     }
 
