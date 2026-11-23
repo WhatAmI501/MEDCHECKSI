@@ -40,8 +40,11 @@ Atualizado em: 2026-11-21
 - **Blindagem de Repositório & Documentação do README:**
   - `.gitignore` robusto protegendo binários `.class`, chaves criptográficas, ambientes virtuais e bancos locais.
   - `README.md` completo com guia de clone, inicialização em 2 terminais e catálogo dos 6 módulos clínicos.
+- **Entrega de Banco de Dados (AV3 - SQL & Documentação):**
+  - Script SQL de integração relacional completo (`MEDCHECK.sql`) contendo os 5 blocos obrigatórios: DDL com as 4 integridades (entidade, referencial, domínio e vazio), Triggers de auditoria imutável e guardrail anti-alergia [RS007], Índices otimizados para busca e ordenação da fila Manchester, Views clínicas unificadas e DCL com controle granular de privilégios (ROLES e GRANT/REVOKE).
+  - Relatório técnico de entrega e documentação de IA (`MEDCHECK_BD_AV3.md` e `MEDCHECK_BD_AV3.txt`).
 - **Sincronização com o Repositório Remoto (GitHub):**
-  - Todas as melhorias funcionais, de interface, segurança e acessibilidade homologadas e versionadas no repositório oficial: https://github.com/WhatAmI501/MEDCHECKSI
+  - Todas as melhorias funcionais, de interface, segurança, banco de dados e documentação versionadas e sincronizadas no repositório oficial: https://github.com/WhatAmI501/MEDCHECKSI
 
 ## Em Andamento
 - Concluído.
