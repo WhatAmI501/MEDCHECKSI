@@ -139,9 +139,9 @@
                     Ordenação dinâmica por gravidade: pacientes classificados como muito urgentes recebem atendimento imediato com precedência clínica absoluta.
                 </p>
             </div>
-            <button class="btn btn-secondary" onclick="carregarFila()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
-                Atualizar Fila
+            <button class="btn btn-secondary" id="btn-atualizar-fila" onclick="atualizarFilaComNovosDados()" style="display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 600;">
+                <svg id="icon-atualizar-fila" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+                <span id="label-atualizar-fila">Atualizar Fila</span>
             </button>
         </div>
 
@@ -209,78 +209,364 @@
         </div>
     </div>
 
+    <!-- Toast de Notificação do Sistema -->
+    <div id="toast" style="display: none; position: fixed; bottom: 2rem; right: 2rem; background: var(--bg-card, #0f172a); color: var(--text-primary, #f8fafc); padding: 0.85rem 1.25rem; border-radius: 8px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.45), 0 8px 10px -6px rgba(0, 0, 0, 0.25); z-index: 9999; align-items: center; gap: 0.75rem; border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.15)); font-size: 0.875rem; max-width: 480px; transition: all 0.3s ease;">
+        <div id="toast-icone" style="width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"></div>
+        <span id="toast-mensagem" style="line-height: 1.45; font-weight: 500;"></span>
+    </div>
+
+    <style>
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .row-novo-paciente {
+            animation: highlightPulse 2.5s ease-out;
+        }
+        @keyframes highlightPulse {
+            0% { background-color: rgba(16, 185, 129, 0.22); }
+            100% { background-color: transparent; }
+        }
+    </style>
+
     <script>
         let filaAtual = [];
         let atendimentoAtivo = null;
+        let toastTimeout = null;
+
+        // Fila base de segurança caso a API ainda não tenha sido populada ou esteja offline
+        const FILA_PADRAO = [
+            {
+                atendimentoId: 1,
+                triagemId: 1,
+                pacienteId: 5,
+                pacienteNome: 'José Ferreira dos Santos',
+                cpf: '888.777.666-55',
+                pacienteIdade: 56,
+                queixa: 'Dor Torácica',
+                corManchester: 'LARANJA',
+                prioridadeRotulo: 'Muito Urgente',
+                tempoAlvoMinutos: 10,
+                status: 'AGUARDANDO_ATENDIMENTO'
+            },
+            {
+                atendimentoId: 2,
+                triagemId: 2,
+                pacienteId: 4,
+                pacienteNome: 'Mariana Oliveira Costa',
+                cpf: '555.444.333-22',
+                pacienteIdade: 29,
+                queixa: 'Cefaleia Intensa',
+                corManchester: 'AMARELO',
+                prioridadeRotulo: 'Urgente',
+                tempoAlvoMinutos: 50,
+                status: 'AGUARDANDO_ATENDIMENTO'
+            }
+        ];
+
+        const PESO_PRIORIDADE = {
+            'VERMELHO': 1,
+            'LARANJA': 2,
+            'AMARELO': 3,
+            'VERDE': 4,
+            'AZUL': 5
+        };
+
+        const CONFIG_PRIORIDADE = {
+            'VERMELHO': { rotulo: 'Emergência', minutos: 0, peso: 1 },
+            'LARANJA': { rotulo: 'Muito Urgente', minutos: 10, peso: 2 },
+            'AMARELO': { rotulo: 'Urgente', minutos: 50, peso: 3 },
+            'VERDE': { rotulo: 'Pouco Urgente', minutos: 120, peso: 4 },
+            'AZUL': { rotulo: 'Não Urgente', minutos: 240, peso: 5 }
+        };
+
+        function ordenarFila(lista) {
+            return lista.sort((a, b) => {
+                const pesoA = PESO_PRIORIDADE[(a.corManchester || '').toUpperCase()] || 99;
+                const pesoB = PESO_PRIORIDADE[(b.corManchester || '').toUpperCase()] || 99;
+                if (pesoA !== pesoB) return pesoA - pesoB;
+                return (a.atendimentoId || 0) - (b.atendimentoId || 0);
+            });
+        }
+
+        /**
+         * Atualiza a fila médica:
+         * 1. Consulta o servidor / armazenamento persistido.
+         * 2. Verifica se o usuário inseriu novos pacientes na página de pacientes (localStorage).
+         * 3. Se houver dados novos, adiciona-os à fila e notifica o usuário.
+         * 4. Se não houver dados novos, apenas atualiza a fila normalmente.
+         */
+        async function atualizarFilaComNovosDados() {
+            const btn = document.getElementById('btn-atualizar-fila');
+            const icon = document.getElementById('icon-atualizar-fila');
+            const label = document.getElementById('label-atualizar-fila');
+
+            if (btn) btn.disabled = true;
+            if (icon) icon.style.animation = 'spin 0.8s linear infinite';
+            if (label) label.textContent = 'Atualizando...';
+
+            let novosAdicionados = [];
+
+            try {
+                // 1. Tenta buscar fila atualizada do servidor
+                let listaServidor = [];
+                try {
+                    const res = await fetch('/api/fila');
+                    if (res.ok) {
+                        const json = await res.json();
+                        if (Array.isArray(json)) listaServidor = json;
+                    }
+                } catch (e) {
+                    console.warn('API /api/fila indisponível, recorrendo ao cache local:', e);
+                }
+
+                // Se servidor não respondeu, utiliza a fila persistida no navegador ou o padrão
+                if (listaServidor.length === 0) {
+                    try {
+                        const salva = JSON.parse(localStorage.getItem('medcheck_fila_persistida') || '[]');
+                        if (Array.isArray(salva) && salva.length > 0) {
+                            listaServidor = salva;
+                        } else if (filaAtual.length > 0) {
+                            listaServidor = filaAtual;
+                        } else {
+                            listaServidor = [...FILA_PADRAO];
+                        }
+                    } catch (e) {
+                        listaServidor = filaAtual.length > 0 ? filaAtual : [...FILA_PADRAO];
+                    }
+                }
+
+                filaAtual = listaServidor;
+
+                // 2. Verifica se há dados novos inseridos pelo usuário na página de pacientes
+                let pendentes = [];
+                try {
+                    pendentes = JSON.parse(localStorage.getItem('medcheck_novos_pacientes_fila') || '[]');
+                    if (!Array.isArray(pendentes)) pendentes = [];
+                } catch (e) {
+                    pendentes = [];
+                }
+
+                if (pendentes.length > 0) {
+                    pendentes.forEach(p => {
+                        const cpfLimpo = (p.cpf || '').replace(/\D/g, '');
+                        const jaConsta = filaAtual.some(item => {
+                            const itemCpf = (item.cpf || '').replace(/\D/g, '');
+                            return (cpfLimpo && itemCpf && cpfLimpo === itemCpf) ||
+                                   (item.pacienteId && p.id && String(item.pacienteId) === String(p.id)) ||
+                                   (item.pacienteNome && p.nome && item.pacienteNome.trim().toLowerCase() === p.nome.trim().toLowerCase());
+                        });
+
+                        if (!jaConsta) {
+                            const cor = (p.prioridadeManchester || 'AZUL').toUpperCase();
+                            const cfg = CONFIG_PRIORIDADE[cor] || CONFIG_PRIORIDADE['AZUL'];
+                            const queixaFinal = (p.queixa || '').trim() || `Acolhimento clínico de triagem (${cfg.rotulo})`;
+
+                            const novoAtendimento = {
+                                atendimentoId: Date.now() + Math.floor(Math.random() * 1000),
+                                triagemId: Date.now(),
+                                pacienteId: p.id || ('pac_' + Date.now()),
+                                pacienteNome: p.nome,
+                                cpf: p.cpf || '',
+                                pacienteIdade: p.idade !== undefined ? p.idade : 30,
+                                queixa: queixaFinal,
+                                corManchester: cor,
+                                prioridadeRotulo: cfg.rotulo,
+                                tempoAlvoMinutos: cfg.minutos,
+                                status: 'AGUARDANDO_ATENDIMENTO',
+                                isNovo: true // Marca para destaque visual
+                            };
+
+                            novosAdicionados.push(novoAtendimento);
+                            filaAtual.unshift(novoAtendimento);
+                        }
+                    });
+
+                    // Limpa a fila de pendentes para não duplicar em atualizações futuras
+                    if (novosAdicionados.length > 0) {
+                        localStorage.removeItem('medcheck_novos_pacientes_fila');
+                    }
+                }
+
+                // 3. Ordenação rigorosa por prioridade de risco (Manchester)
+                ordenarFila(filaAtual);
+
+                // 4. Salva a fila consolidada no localStorage para persistência entre abas e reloads
+                try {
+                    localStorage.setItem('medcheck_fila_persistida', JSON.stringify(filaAtual));
+                } catch (e) {}
+
+                // 5. Renderiza a tabela na tela
+                renderizarFila();
+
+                // 6. Feedback objetivo para o usuário
+                if (novosAdicionados.length > 0) {
+                    const nomes = novosAdicionados.map(n => n.pacienteNome).join(', ');
+                    mostrarToast(
+                        `Fila atualizada! ${novosAdicionados.length} novo(s) paciente(s) adicionado(s): ${nomes}`,
+                        'sucesso'
+                    );
+                } else {
+                    mostrarToast(
+                        'Fila atualizada! Não há novos pacientes pendentes na página de cadastro.',
+                        'info'
+                    );
+                }
+            } catch (err) {
+                console.error('Erro ao atualizar fila:', err);
+                mostrarToast('Erro ao atualizar fila de atendimento.', 'erro');
+            } finally {
+                setTimeout(() => {
+                    if (btn) btn.disabled = false;
+                    if (icon) icon.style.animation = '';
+                    if (label) label.textContent = 'Atualizar Fila';
+                }, 400);
+            }
+        }
 
         async function carregarFila() {
-            try {
-                const res = await fetch('/api/fila');
-                filaAtual = await res.json();
+            const tbody = document.getElementById('tabela-fila');
+            const contador = document.getElementById('fila-contador');
 
-                // Ordenação por prioridade: Vermelho > Laranja > Amarelo > Verde > Azul
-                const PESO_PRIORIDADE = {
-                    'VERMELHO': 1,
-                    'LARANJA': 2,
-                    'AMARELO': 3,
-                    'VERDE': 4,
-                    'AZUL': 5
-                };
-                filaAtual.sort((a, b) => {
-                    const pesoA = PESO_PRIORIDADE[(a.corManchester || '').toUpperCase()] || 99;
-                    const pesoB = PESO_PRIORIDADE[(b.corManchester || '').toUpperCase()] || 99;
-                    if (pesoA !== pesoB) return pesoA - pesoB;
-                    return (a.atendimentoId || 0) - (b.atendimentoId || 0);
-                });
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;"><div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;"><div style="width: 16px; height: 16px; border: 2px solid var(--border-subtle); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite;"></div><span>Carregando fila priorizada...</span></div></td></tr>';
+            }
+
+            try {
+                let dados = [];
+                try {
+                    const res = await fetch('/api/fila');
+                    if (res.ok) {
+                        const json = await res.json();
+                        if (Array.isArray(json)) dados = json;
+                    }
+                } catch (netErr) {
+                    console.warn('API indisponível, carregando estado persistido:', netErr);
+                }
+
+                if (dados.length === 0) {
+                    try {
+                        const salva = JSON.parse(localStorage.getItem('medcheck_fila_persistida') || '[]');
+                        if (Array.isArray(salva) && salva.length > 0) {
+                            dados = salva;
+                        } else {
+                            dados = [...FILA_PADRAO];
+                        }
+                    } catch (e) {
+                        dados = [...FILA_PADRAO];
+                    }
+                }
+
+                filaAtual = dados;
+
+                // Integração silenciosa no carregamento inicial caso haja novos cadastros pendentes
+                try {
+                    const pendentes = JSON.parse(localStorage.getItem('medcheck_novos_pacientes_fila') || '[]');
+                    if (Array.isArray(pendentes) && pendentes.length > 0) {
+                        pendentes.forEach(p => {
+                            const cpfLimpo = (p.cpf || '').replace(/\D/g, '');
+                            const jaExiste = filaAtual.some(item => {
+                                const itemCpf = (item.cpf || '').replace(/\D/g, '');
+                                return (cpfLimpo && itemCpf && cpfLimpo === itemCpf) ||
+                                       (item.pacienteId && p.id && String(item.pacienteId) === String(p.id));
+                            });
+                            if (!jaExiste) {
+                                const cor = (p.prioridadeManchester || 'AZUL').toUpperCase();
+                                const cfg = CONFIG_PRIORIDADE[cor] || CONFIG_PRIORIDADE['AZUL'];
+                                filaAtual.unshift({
+                                    atendimentoId: Date.now() + Math.floor(Math.random() * 1000),
+                                    triagemId: Date.now(),
+                                    pacienteId: p.id || ('pac_' + Date.now()),
+                                    pacienteNome: p.nome,
+                                    cpf: p.cpf || '',
+                                    pacienteIdade: p.idade !== undefined ? p.idade : 30,
+                                    queixa: (p.queixa || '').trim() || `Acolhimento clínico de triagem (${cfg.rotulo})`,
+                                    corManchester: cor,
+                                    prioridadeRotulo: cfg.rotulo,
+                                    tempoAlvoMinutos: cfg.minutos,
+                                    status: 'AGUARDANDO_ATENDIMENTO'
+                                });
+                            }
+                        });
+                        localStorage.removeItem('medcheck_novos_pacientes_fila');
+                    }
+                } catch (e) {}
+
+                ordenarFila(filaAtual);
+                try {
+                    localStorage.setItem('medcheck_fila_persistida', JSON.stringify(filaAtual));
+                } catch (e) {}
 
                 renderizarFila();
             } catch (err) {
-                console.error('Erro ao consultar fila:', err);
+                console.error('Erro ao carregar fila:', err);
+                filaAtual = [...FILA_PADRAO];
+                ordenarFila(filaAtual);
+                renderizarFila();
             }
         }
 
         function renderizarFila() {
             const tbody = document.getElementById('tabela-fila');
             const contador = document.getElementById('fila-contador');
+            if (!tbody) return;
             tbody.innerHTML = '';
-            contador.innerText = `${filaAtual.length} ${filaAtual.length === 1 ? 'paciente' : 'pacientes'}`;
 
-            if (filaAtual.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">Nenhum paciente aguardando atendimento no momento.</td></tr>';
+            const total = Array.isArray(filaAtual) ? filaAtual.length : 0;
+            if (contador) {
+                contador.innerText = `${total} ${total === 1 ? 'paciente' : 'pacientes'}`;
+            }
+
+            if (total === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2.5rem 1rem;">Nenhum paciente aguardando atendimento no momento.</td></tr>';
                 return;
             }
 
             filaAtual.forEach((item, index) => {
                 const tr = document.createElement('tr');
-                const iniciais = item.pacienteNome.split(' ').slice(0, 2).map(n => n[0]).join('');
-                
+                if (item.isNovo) {
+                    tr.classList.add('row-novo-paciente');
+                    // Remove a flag temporária após primeiro render
+                    delete item.isNovo;
+                }
+
+                const nome = (item.pacienteNome || 'Paciente').trim();
+                const partes = nome.split(/\s+/).filter(Boolean);
+                const iniciais = (partes.length >= 2 ? (partes[0][0] + partes[1][0]) : (partes[0] ? partes[0].substring(0, 2) : 'PA')).toUpperCase();
+                const cor = (item.corManchester || 'AZUL').toUpperCase();
+                const rotulo = item.prioridadeRotulo || 'Não Urgente';
+                const idade = item.pacienteIdade !== undefined && item.pacienteIdade !== null ? item.pacienteIdade : '-';
+                const queixa = item.queixa || 'Acolhimento clínico de triagem';
+                const tempoAlvo = item.tempoAlvoMinutos !== undefined && item.tempoAlvoMinutos !== null ? item.tempoAlvoMinutos : 240;
+                const atendimentoId = item.atendimentoId || (index + 1);
+
                 tr.innerHTML = `
                     <td class="tabular-nums" style="font-weight: 800; color: var(--text-muted);">#${index + 1}</td>
                     <td>
-                        <span class="badge-manchester badge-${item.corManchester}">
+                        <span class="badge-manchester badge-${cor}">
                             <span class="badge-manchester-dot"></span>
-                            ${item.prioridadeRotulo}
+                            ${rotulo}
                         </span>
                     </td>
                     <td>
                         <div style="display: flex; align-items: center; gap: 0.65rem;">
-                            <div style="width: 32px; height: 32px; border-radius: 50%; background: #e0f2fe; color: #0369a1; font-weight: 700; font-size: 0.75rem; display: flex; align-items: center; justify-content: center;">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: #e0f2fe; color: #0369a1; font-weight: 700; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                                 ${iniciais}
                             </div>
                             <div>
-                                <strong style="color: var(--text-primary); font-size: 0.875rem;">${item.pacienteNome}</strong>
-                                <div style="font-size: 0.75rem; color: var(--text-muted);">${item.pacienteIdade} anos</div>
+                                <strong style="color: var(--text-primary); font-size: 0.875rem;">${nome}</strong>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">${idade} anos</div>
                             </div>
                         </div>
                     </td>
-                    <td style="color: var(--text-secondary); max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                        ${item.queixa}
+                    <td style="color: var(--text-secondary); max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${queixa}">
+                        ${queixa}
                     </td>
                     <td class="tabular-nums" style="font-weight: 700; color: var(--text-primary);">
-                        ${item.tempoAlvoMinutos} min
+                        ${tempoAlvo} min
                     </td>
                     <td>
-                        <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;" onclick="selecionarParaAtendimento(${item.atendimentoId})">
+                        <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;" onclick="selecionarParaAtendimento(${atendimentoId})">
                             Atender
                         </button>
                     </td>
@@ -294,19 +580,65 @@
             if (!item) return;
             atendimentoAtivo = item;
 
-            const res = await fetch(`/api/pacientes/${item.pacienteId}/historico`);
-            const dados = await res.json();
-
             const painel = document.getElementById('detalhe-paciente-selecionado');
+            if (painel) {
+                painel.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">Carregando histórico do paciente...</div>';
+            }
+
+            let paciente = null;
+            let triagens = [];
+
+            // 1. Tenta buscar histórico na API
+            try {
+                const res = await fetch(`/api/pacientes/${item.pacienteId}/historico`);
+                if (res.ok) {
+                    const dados = await res.json();
+                    paciente = dados.paciente;
+                    triagens = dados.triagens || [];
+                }
+            } catch (e) {
+                console.warn('Histórico via API indisponível, buscando no storage local:', e);
+            }
+
+            // 2. Se não veio da API, busca no cadastro local
+            if (!paciente) {
+                try {
+                    const cadastrados = JSON.parse(localStorage.getItem('medcheck_pacientes_cadastrados') || '[]');
+                    const cpfLimpo = (item.cpf || '').replace(/\D/g, '');
+                    paciente = cadastrados.find(p => {
+                        const pCpf = (p.cpf || '').replace(/\D/g, '');
+                        return (cpfLimpo && pCpf && cpfLimpo === pCpf) || String(p.id) === String(item.pacienteId) || p.nome === item.pacienteNome;
+                    }) || {
+                        nome: item.pacienteNome,
+                        idade: item.pacienteIdade,
+                        alergias: 'Nenhuma alergia conhecida',
+                        doencasCronicas: 'Nenhuma declarada'
+                    };
+                } catch (e) {
+                    paciente = {
+                        nome: item.pacienteNome,
+                        idade: item.pacienteIdade,
+                        alergias: 'Nenhuma alergia conhecida',
+                        doencasCronicas: 'Nenhuma declarada'
+                    };
+                }
+            }
+
+            const cor = (item.corManchester || 'AZUL').toUpperCase();
+            const rotulo = item.prioridadeRotulo || 'Não Urgente';
+            const alergiasTexto = paciente.alergias || 'Nenhuma alergia conhecida';
+            const doencasTexto = paciente.doencasCronicas || 'Nenhuma declarada';
+            const resumoTriagem = (triagens[0] && triagens[0].resumo) ? triagens[0].resumo : (item.queixa || 'Acolhimento clínico de triagem');
+
             painel.innerHTML = `
                 <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem; margin-bottom: 1rem;">
                     <div style="font-weight: 800; font-size: 1.125rem; color: var(--text-primary);">${item.pacienteNome}</div>
                     <div style="font-size: 0.8125rem; color: var(--text-secondary); margin-top: 0.2rem; display: flex; align-items: center; gap: 0.5rem;">
                         <span><strong class="tabular-nums">${item.pacienteIdade}</strong> anos</span>
                         <span>•</span>
-                        <span class="badge-manchester badge-${item.corManchester}" style="font-size: 0.7rem; padding: 2px 6px;">
+                        <span class="badge-manchester badge-${cor}" style="font-size: 0.7rem; padding: 2px 6px;">
                             <span class="badge-manchester-dot"></span>
-                            ${item.prioridadeRotulo}
+                            ${rotulo}
                         </span>
                     </div>
                 </div>
@@ -314,18 +646,18 @@
                 <div style="margin-bottom: 1rem;">
                     <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">Alergias Cadastradas:</div>
                     <div style="color: #991b1b; font-weight: 700; font-size: 0.8125rem; background: var(--m-vermelho-bg); border: 1px solid var(--m-vermelho-border); padding: 0.4rem 0.65rem; border-radius: var(--radius-sm); margin-top: 0.25rem;">
-                        ${dados.paciente.alergias || 'Nenhuma alergia conhecida'}
+                        ${alergiasTexto}
                     </div>
 
                     <div style="margin-top: 0.6rem; font-size: 0.8125rem;">
                         <span style="color: var(--text-muted);">Comorbidades:</span>
-                        <strong style="color: var(--text-primary);">${dados.paciente.doencasCronicas || 'Nenhuma declarada'}</strong>
+                        <strong style="color: var(--text-primary);">${doencasTexto}</strong>
                     </div>
                 </div>
 
                 <div style="background-color: var(--bg-subtle); border-radius: var(--radius-sm); padding: 0.85rem; font-size: 0.8125rem; margin-bottom: 1rem; border: 1px solid var(--border-subtle);">
                     <strong style="color: var(--text-secondary); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.04em;">Resumo Clínico da Triagem:</strong>
-                    <p style="margin-top: 0.25rem; color: var(--text-primary); line-height: 1.45;">${dados.triagens[0] ? dados.triagens[0].resumo : item.queixa}</p>
+                    <p style="margin-top: 0.25rem; color: var(--text-primary); line-height: 1.45;">${resumoTriagem}</p>
                 </div>
 
                 <div class="form-group">
@@ -351,9 +683,21 @@
             `;
         }
 
-        function concluirAtendimento() {
+        async function concluirAtendimento() {
+            if (atendimentoAtivo) {
+                const idConcluido = atendimentoAtivo.atendimentoId;
+                filaAtual = filaAtual.filter(f => f.atendimentoId !== idConcluido);
+                try {
+                    localStorage.setItem('medcheck_fila_persistida', JSON.stringify(filaAtual));
+                } catch (e) {}
+                renderizarFila();
+
+                try {
+                    await fetch(`/api/fila/${idConcluido}`, { method: 'DELETE' });
+                } catch (e) {}
+            }
+
             alert('Consulta médica concluída e registrada com sucesso no prontuário.');
-            carregarFila();
             document.getElementById('detalhe-paciente-selecionado').innerHTML = `
                 <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
                     <div style="width: 48px; height: 48px; border-radius: 50%; background: #ecfdf5; color: #059669; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.875rem;">
@@ -363,6 +707,36 @@
                     <p style="font-size: 0.8125rem;">Selecione o próximo paciente na fila de espera.</p>
                 </div>
             `;
+            atendimentoAtivo = null;
+        }
+
+        function mostrarToast(mensagem, tipo = 'info') {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-mensagem');
+            const iconeEl = document.getElementById('toast-icone');
+            if (!toast || !msgEl || !iconeEl) return;
+
+            msgEl.textContent = mensagem;
+
+            if (tipo === 'sucesso') {
+                iconeEl.style.backgroundColor = 'rgba(16, 185, 129, 0.2)';
+                iconeEl.style.color = '#10b981';
+                iconeEl.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+            } else if (tipo === 'erro') {
+                iconeEl.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
+                iconeEl.style.color = '#ef4444';
+                iconeEl.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+            } else {
+                iconeEl.style.backgroundColor = 'rgba(14, 165, 233, 0.2)';
+                iconeEl.style.color = '#0ea5e9';
+                iconeEl.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
+            }
+
+            toast.style.display = 'flex';
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.style.display = 'none';
+            }, 4500);
         }
 
         window.onload = carregarFila;

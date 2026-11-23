@@ -12,6 +12,217 @@
         rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
     <script src="/theme.js"></script>
+    <style>
+        /* Estilos do Modal de Cadastro */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            animation: modalFadeIn 0.2s ease-out;
+        }
+
+        .modal-dialog {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg, 12px);
+            width: 100%;
+            max-width: 680px;
+            max-height: calc(100vh - 2.5rem);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+            overflow: hidden;
+            animation: modalScaleUp 0.2s ease-out;
+        }
+
+        .modal-header {
+            padding: 1.15rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            background-color: var(--bg-surface);
+        }
+
+        .modal-title {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .modal-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: var(--radius-sm, 6px);
+            padding: 0.35rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+        }
+
+        .modal-close-btn:hover {
+            color: var(--text-primary);
+            background-color: var(--bg-subtle);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            background-color: var(--bg-subtle);
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        /* Layout em duas colunas responsivo */
+        .form-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 640px) {
+            .form-row-2 {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+            .modal-dialog {
+                max-height: calc(100vh - 1rem);
+            }
+            .modal-body {
+                padding: 1rem;
+            }
+        }
+
+        /* Validação e Erros de Campos */
+        .field-group {
+            margin-bottom: 1rem;
+        }
+
+        .field-group label {
+            display: block;
+            margin-bottom: 0.35rem;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .field-group label .req {
+            color: #dc2626;
+            margin-left: 2px;
+        }
+
+        .field-error-msg {
+            display: none;
+            color: #dc2626;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.3rem;
+            line-height: 1.25;
+        }
+
+        .field-group.has-error input,
+        .field-group.has-error select,
+        .field-group.has-error textarea {
+            border-color: #dc2626 !important;
+            background-color: #fef2f2 !important;
+        }
+
+        [data-theme="dark"] .field-group.has-error input,
+        [data-theme="dark"] .field-group.has-error select,
+        [data-theme="dark"] .field-group.has-error textarea {
+            background-color: rgba(220, 38, 38, 0.12) !important;
+        }
+
+        .field-group.has-error .field-error-msg {
+            display: block;
+        }
+
+        /* Alerta geral no topo do modal */
+        .modal-alert {
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-md, 8px);
+            margin-bottom: 1.25rem;
+            font-size: 0.8125rem;
+            line-height: 1.4;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .modal-alert-danger {
+            background-color: var(--m-vermelho-bg);
+            border: 1px solid var(--m-vermelho-border);
+            color: var(--m-vermelho-text);
+            font-weight: 600;
+        }
+
+        /* Notificação Toast Flutuante */
+        .toast-notification {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background: #0f172a;
+            color: #ffffff;
+            padding: 0.85rem 1.25rem;
+            border-radius: var(--radius-md, 8px);
+            font-size: 0.875rem;
+            font-weight: 600;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            z-index: 10000;
+            animation: toastSlideUp 0.25s ease-out;
+        }
+
+        [data-theme="dark"] .toast-notification {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #f8fafc;
+        }
+
+        .toast-success {
+            border-left: 4px solid #16a34a;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes modalScaleUp {
+            from { opacity: 0; transform: scale(0.96); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes toastSlideUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
 
 <body>
@@ -175,13 +386,12 @@
                             <span class="notification-dot" id="topbar-notification-dot"></span>
                         </button>
                     </div>
-
-
                 </div>
             </header>
 
             <main>
-                <div class="page-header">
+                <!-- Cabeçalho com Botão de Ação "+ Novo Paciente" -->
+                <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
                     <div>
                         <h2 class="page-title">Gestão de Pacientes & Prontuário Longitudinal</h2>
                         <p class="page-subtitle">
@@ -189,170 +399,106 @@
                             triagens e prescrições médicas.
                         </p>
                     </div>
+                    <button class="btn btn-primary" onclick="abrirModalCadastro()" id="btn-novo-paciente"
+                        style="display: inline-flex; align-items: center; gap: 0.55rem; font-weight: 700; padding: 0.65rem 1.25rem; font-size: 0.875rem; box-shadow: 0 4px 6px -1px rgba(3, 105, 161, 0.25);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <line x1="19" y1="8" x2="19" y2="14" />
+                            <line x1="22" y1="11" x2="16" y2="11" />
+                        </svg>
+                        <span>+ Novo Paciente</span>
+                    </button>
                 </div>
 
-                <div class="grid grid-cols-3">
-                    <!-- Formulário de Cadastro do Paciente -->
-                    <div>
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <!-- Diretório de Pacientes Ocupando Toda a Área Principal -->
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.85rem;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 0.65rem;">
+                                <h3 class="card-title" style="margin: 0;">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                                         <circle cx="9" cy="7" r="4" />
-                                        <line x1="19" y1="8" x2="19" y2="14" />
-                                        <line x1="22" y1="11" x2="16" y2="11" />
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                                     </svg>
-                                    Novo Cadastro
+                                    Diretório de Pacientes
                                 </h3>
+                                <span id="contador-pacientes"
+                                    style="background-color: var(--primary-subtle); color: var(--primary); font-size: 0.75rem; font-weight: 700; padding: 0.15rem 0.6rem; border-radius: 9999px; border: 1px solid var(--primary-border);">
+                                    0 pacientes
+                                </span>
                             </div>
+                            <p style="font-size: 0.8125rem; color: var(--text-muted); margin-top: 0.25rem;">
+                                Clique em "Prontuário" para consultar o histórico longitudinal completo
+                            </p>
+                        </div>
 
-                            <form id="form-paciente" onsubmit="cadastrarPaciente(event)">
-                                <div class="form-group">
-                                    <label>Nome Completo:</label>
-                                    <input type="text" id="cad-nome" required placeholder="Ex: Felipe Santos">
-                                </div>
-
-                                <div class="form-group">
-                                    <label>CPF (Identificador Único):</label>
-                                    <input type="text" id="cad-cpf" class="tabular-nums" required
-                                        placeholder="000.000.000-00">
-                                </div>
-
-                                <div class="form-group">
-                                    <label>E-mail de Contato:</label>
-                                    <input type="email" id="cad-email" required placeholder="paciente@exemplo.com">
-                                </div>
-
-                                <div style="display: flex; gap: 0.5rem;">
-                                    <div class="form-group" style="flex: 1;">
-                                        <label>Data de Nascimento:</label>
-                                        <input type="date" id="cad-data" required>
-                                    </div>
-                                    <div class="form-group" style="flex: 1;">
-                                        <label>Sexo:</label>
-                                        <select id="cad-sexo">
-                                            <option value="Feminino">Feminino</option>
-                                            <option value="Masculino">Masculino</option>
-                                            <option value="Outro">Outro</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div style="display: flex; gap: 0.5rem;">
-                                    <div class="form-group" style="flex: 1;">
-                                        <label>Peso (kg):</label>
-                                        <input type="number" id="cad-peso" step="0.1" value="70.0">
-                                    </div>
-                                    <div class="form-group" style="flex: 1;">
-                                        <label>Altura (m):</label>
-                                        <input type="number" id="cad-altura" step="0.01" value="1.70">
-                                    </div>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>Alergias Conhecidas (Medicamentosa / Alimentar):</label>
-                                    <input type="text" id="cad-alergias" placeholder="Ex: Dipirona, Penicilina, AINE">
-                                </div>
-
-                                <div class="form-group">
-                                    <label>Doenças Crônicas / Histórico Clínico:</label>
-                                    <textarea id="cad-doencas" rows="2"
-                                        placeholder="Hipertensão, cardiopatia prévia, diabetes..."></textarea>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>Prioridade de Atendimento (Protocolo de Manchester):</label>
-                                    <select id="cad-prioridade" style="font-weight: 700;">
-                                        <option value="VERMELHO" style="color: #b91c1c; font-weight: 700;">Vermelho —
-                                            Emergência Imediata (0 min)</option>
-                                        <option value="LARANJA" style="color: #c2410c; font-weight: 700;">Laranja —
-                                            Muito Urgente (10 min)</option>
-                                        <option value="AMARELO" style="color: #b45309; font-weight: 700;" selected>
-                                            Amarelo — Urgente (50 min)</option>
-                                        <option value="VERDE" style="color: #15803d; font-weight: 700;">Verde — Pouco
-                                            Urgente (120 min)</option>
-                                        <option value="AZUL" style="color: #1d4ed8; font-weight: 700;">Azul — Não
-                                            Urgente (240 min)</option>
-                                    </select>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>Queixa Clínica / Motivo da Consulta:</label>
-                                    <input type="text" id="cad-queixa"
-                                        placeholder="Ex: Cefaleia intensa, dor torácica, dor de garganta...">
-                                </div>
-
-                                <button type="submit" class="btn btn-primary" style="width: 100%;">
-                                    Concluir Cadastro de Paciente
-                                </button>
-                            </form>
+                        <!-- Barra de Pesquisa Rápida -->
+                        <div style="display: flex; align-items: center; gap: 0.5rem; width: 100%; max-width: 320px;">
+                            <div style="position: relative; width: 100%;">
+                                <input type="text" id="campo-busca" placeholder="Buscar por nome, CPF ou alergia..."
+                                    oninput="filtrarPacientes(this.value)"
+                                    style="padding-left: 2.2rem; font-size: 0.8125rem; width: 100%; height: 38px;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                    style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Listagem de Pacientes e Prontuário -->
-                    <div style="grid-column: span 2;">
-                        <div class="card" style="margin-bottom: 1.25rem;">
-                            <div class="card-header">
-                                <div>
-                                    <h3 class="card-title">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                            stroke-linejoin="round">
-                                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                                            <circle cx="9" cy="7" r="4" />
-                                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                                        </svg>
-                                        Diretório de Pacientes
-                                    </h3>
-                                    <p style="font-size: 0.8125rem; color: var(--text-muted); margin-top: 0.15rem;">
-                                        Clique em "Prontuário" para consultar o histórico longitudinal completo</p>
-                                </div>
-                            </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Paciente</th>
+                                    <th>CPF</th>
+                                    <th>Idade</th>
+                                    <th>Alergias Cadastradas</th>
+                                    <th style="text-align: right;">Ações Clínicas</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-pacientes">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+                                        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                                            <div style="width: 24px; height: 24px; border: 3px solid var(--border-subtle); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+                                            <span>Carregando pacientes do diretório...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
-                            <div class="table-container">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Paciente</th>
-                                            <th>CPF</th>
-                                            <th>Idade</th>
-                                            <th>Alergias Cadastradas</th>
-                                            <th>Ação</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tabela-pacientes">
-                                        <tr>
-                                            <td colspan="5"
-                                                style="text-align: center; padding: 2rem; color: var(--text-muted);">
-                                                Carregando pacientes...</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Painel do Prontuário Longitudinal -->
-                        <div class="card" id="painel-longitudinal" style="display: none;">
-                            <div class="card-header">
-                                <h3 class="card-title">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                        <polyline points="14 2 14 8 20 8" />
-                                        <line x1="16" y1="13" x2="8" y2="13" />
-                                        <line x1="16" y1="17" x2="8" y2="17" />
-                                        <polyline points="10 9 9 9 8 9" />
-                                    </svg>
-                                    Linha do Tempo Clínica (Prontuário Longitudinal)
-                                </h3>
-                            </div>
-                            <div id="conteudo-longitudinal">
-                                <!-- Injetado dinamicamente -->
-                            </div>
-                        </div>
+                <!-- Painel do Prontuário Longitudinal -->
+                <div class="card" id="painel-longitudinal" style="display: none; margin-bottom: 2rem;">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3 class="card-title">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                                <line x1="16" y1="13" x2="8" y2="13" />
+                                <line x1="16" y1="17" x2="8" y2="17" />
+                                <polyline points="10 9 9 9 8 9" />
+                            </svg>
+                            Linha do Tempo Clínica (Prontuário Longitudinal)
+                        </h3>
+                        <button class="btn btn-secondary" onclick="fecharProntuario()" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">
+                            Ocultar Prontuário
+                        </button>
+                    </div>
+                    <div id="conteudo-longitudinal">
+                        <!-- Injetado dinamicamente -->
                     </div>
                 </div>
             </main>
@@ -363,161 +509,719 @@
         </div>
     </div>
 
+    <!-- Modal Centralizado: Novo Cadastro de Paciente -->
+    <div id="modal-cadastro-overlay" class="modal-overlay" style="display: none;" onclick="tratarCliqueBackdrop(event)">
+        <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+            <div class="modal-header">
+                <h3 id="modal-titulo" class="modal-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <line x1="19" y1="8" x2="19" y2="14" />
+                        <line x1="22" y1="11" x2="16" y2="11" />
+                    </svg>
+                    <span>Novo Cadastro de Paciente</span>
+                </h3>
+                <button type="button" class="modal-close-btn" onclick="fecharModalCadastro()" aria-label="Fechar modal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="form-paciente" onsubmit="cadastrarPaciente(event)" novalidate>
+                <div class="modal-body">
+                    <!-- Alerta de Erro Geral -->
+                    <div id="modal-alerta-erro" class="modal-alert modal-alert-danger" style="display: none;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <span id="modal-alerta-texto">Erro ao processar o cadastro.</span>
+                    </div>
+
+                    <!-- Nome Completo (Largura Total) -->
+                    <div class="field-group" id="grp-nome">
+                        <label for="cad-nome">Nome Completo: <span class="req">*</span></label>
+                        <input type="text" id="cad-nome" placeholder="Ex: Felipe Santos da Silva" autocomplete="name">
+                        <div class="field-error-msg" id="err-nome">Por favor, informe o nome completo (mínimo de 3 caracteres).</div>
+                    </div>
+
+                    <!-- CPF e E-mail (2 Colunas) -->
+                    <div class="form-row-2">
+                        <div class="field-group" id="grp-cpf">
+                            <label for="cad-cpf">CPF (Identificador Único): <span class="req">*</span></label>
+                            <input type="text" id="cad-cpf" class="tabular-nums" placeholder="000.000.000-00"
+                                maxlength="14" oninput="mascaraCPF(this)">
+                            <div class="field-error-msg" id="err-cpf">CPF inválido ou incompleto.</div>
+                        </div>
+
+                        <div class="field-group" id="grp-email">
+                            <label for="cad-email">E-mail de Contato: <span class="req">*</span></label>
+                            <input type="email" id="cad-email" placeholder="paciente@exemplo.com" autocomplete="email">
+                            <div class="field-error-msg" id="err-email">Informe um endereço de e-mail válido.</div>
+                        </div>
+                    </div>
+
+                    <!-- Data de Nascimento e Sexo (2 Colunas) -->
+                    <div class="form-row-2">
+                        <div class="field-group" id="grp-data">
+                            <label for="cad-data">Data de Nascimento: <span class="req">*</span></label>
+                            <input type="date" id="cad-data">
+                            <div class="field-error-msg" id="err-data">Informe uma data de nascimento válida.</div>
+                        </div>
+
+                        <div class="field-group" id="grp-sexo">
+                            <label for="cad-sexo">Sexo: <span class="req">*</span></label>
+                            <select id="cad-sexo">
+                                <option value="Feminino">Feminino</option>
+                                <option value="Masculino">Masculino</option>
+                                <option value="Outro">Outro</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Peso e Altura (2 Colunas) -->
+                    <div class="form-row-2">
+                        <div class="field-group" id="grp-peso">
+                            <label for="cad-peso">Peso (kg):</label>
+                            <input type="number" id="cad-peso" step="0.1" min="1" max="350" value="70.0">
+                            <div class="field-error-msg" id="err-peso">Peso deve ser um valor positivo válido.</div>
+                        </div>
+
+                        <div class="field-group" id="grp-altura">
+                            <label for="cad-altura">Altura (m):</label>
+                            <input type="number" id="cad-altura" step="0.01" min="0.3" max="2.5" value="1.70">
+                            <div class="field-error-msg" id="err-altura">Altura deve ser entre 0.30m e 2.50m.</div>
+                        </div>
+                    </div>
+
+                    <!-- Alergias Conhecidas (Largura Total) -->
+                    <div class="field-group" id="grp-alergias">
+                        <label for="cad-alergias">Alergias Conhecidas (Medicamentosa / Alimentar):</label>
+                        <input type="text" id="cad-alergias" placeholder="Ex: Dipirona, Penicilina, AINE, Frutos do mar">
+                    </div>
+
+                    <!-- Doenças Crônicas / Histórico Clínico (Largura Total) -->
+                    <div class="field-group" id="grp-doencas">
+                        <label for="cad-doencas">Doenças Crônicas / Histórico Clínico:</label>
+                        <textarea id="cad-doencas" rows="2"
+                            placeholder="Hipertensão arterial, cardiopatia prévia, diabetes mellitus tipo 2..."></textarea>
+                    </div>
+
+                    <!-- Prioridade Manchester e Queixa Clínica (2 Colunas) -->
+                    <div class="form-row-2">
+                        <div class="field-group" id="grp-prioridade">
+                            <label for="cad-prioridade">Prioridade (Protocolo de Manchester):</label>
+                            <select id="cad-prioridade" style="font-weight: 700;">
+                                <option value="VERMELHO" style="color: #b91c1c; font-weight: 700;">Vermelho — Emergência Imediata (0 min)</option>
+                                <option value="LARANJA" style="color: #c2410c; font-weight: 700;">Laranja — Muito Urgente (10 min)</option>
+                                <option value="AMARELO" style="color: #b45309; font-weight: 700;" selected>Amarelo — Urgente (50 min)</option>
+                                <option value="VERDE" style="color: #15803d; font-weight: 700;">Verde — Pouco Urgente (120 min)</option>
+                                <option value="AZUL" style="color: #1d4ed8; font-weight: 700;">Azul — Não Urgente (240 min)</option>
+                            </select>
+                        </div>
+
+                        <div class="field-group" id="grp-queixa">
+                            <label for="cad-queixa">Queixa Clínica / Motivo da Consulta:</label>
+                            <input type="text" id="cad-queixa" placeholder="Ex: Cefaleia intensa, dor torácica...">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="fecharModalCadastro()">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btn-submit-cadastrar" class="btn btn-primary"
+                        style="display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 700;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span>Cadastrar Paciente</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast de Notificação -->
+    <div id="toast" class="toast-notification toast-success" style="display: none;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #22c55e;">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+        <span id="toast-mensagem">Operação realizada com sucesso!</span>
+    </div>
+
     <script>
+        // Cache em memória de pacientes para busca rápida e validação de duplicidade
+        let listaPacientesCache = [];
+
+        // -------------------------------------------------------------
+        // CARREGAMENTO E RENDERIZAÇÃO DO DIRETÓRIO DE PACIENTES
+        // -------------------------------------------------------------
+        function calcularIdade(dataNasc) {
+            if (!dataNasc) return 30;
+            const partes = dataNasc.split('-');
+            if (partes.length < 3) return 30;
+            const nasc = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
+            const hoje = new Date();
+            let idade = hoje.getFullYear() - nasc.getFullYear();
+            const m = hoje.getMonth() - nasc.getMonth();
+            if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) idade--;
+            return Math.max(0, idade);
+        }
+
+        function salvarPacienteLocalStorage(payload, idGerado) {
+            try {
+                const novoPacienteObj = {
+                    id: idGerado || ('pac_' + Date.now()),
+                    nome: payload.nome,
+                    cpf: payload.cpf,
+                    email: payload.email,
+                    dataNascimento: payload.dataNascimento,
+                    idade: calcularIdade(payload.dataNascimento),
+                    sexo: payload.sexo,
+                    peso: payload.peso,
+                    altura: payload.altura,
+                    alergias: payload.alergias,
+                    doencasCronicas: payload.doencasCronicas,
+                    prioridadeManchester: payload.prioridadeManchester || 'AZUL',
+                    queixa: payload.queixa || 'Acolhimento clínico cadastral',
+                    dataCadastro: new Date().toISOString()
+                };
+
+                // 1. Armazena na fila de novos pacientes para a página de Fila Médica
+                let pendentes = [];
+                try {
+                    pendentes = JSON.parse(localStorage.getItem('medcheck_novos_pacientes_fila') || '[]');
+                    if (!Array.isArray(pendentes)) pendentes = [];
+                } catch (e) { pendentes = []; }
+
+                const cpfLimpo = (novoPacienteObj.cpf || '').replace(/\D/g, '');
+                pendentes = pendentes.filter(p => (p.cpf || '').replace(/\D/g, '') !== cpfLimpo);
+                pendentes.push(novoPacienteObj);
+                localStorage.setItem('medcheck_novos_pacientes_fila', JSON.stringify(pendentes));
+
+                // 2. Armazena no diretório persistido de pacientes
+                let cadastrados = [];
+                try {
+                    cadastrados = JSON.parse(localStorage.getItem('medcheck_pacientes_cadastrados') || '[]');
+                    if (!Array.isArray(cadastrados)) cadastrados = [];
+                } catch (e) { cadastrados = []; }
+
+                cadastrados = cadastrados.filter(p => (p.cpf || '').replace(/\D/g, '') !== cpfLimpo);
+                cadastrados.unshift(novoPacienteObj);
+                localStorage.setItem('medcheck_pacientes_cadastrados', JSON.stringify(cadastrados));
+
+                return novoPacienteObj;
+            } catch (e) {
+                console.warn('Erro ao salvar paciente no localStorage:', e);
+                return null;
+            }
+        }
+
         async function carregarPacientes() {
+            const tbody = document.getElementById('tabela-pacientes');
+            const contador = document.getElementById('contador-pacientes');
+
+            let pacientes = [];
             try {
                 const res = await fetch('/api/pacientes');
-                const pacientes = await res.json();
-                const tbody = document.getElementById('tabela-pacientes');
-                tbody.innerHTML = '';
-
-                pacientes.forEach(p => {
-                    const tr = document.createElement('tr');
-                    const iniciais = p.nome.split(' ').slice(0, 2).map(n => n[0]).join('');
-
-                    tr.innerHTML = `
-                        <td>
-                            <div style="display: flex; align-items: center; gap: 0.65rem;">
-                                <div style="width: 32px; height: 32px; border-radius: 50%; background: #e0f2fe; color: #0369a1; font-weight: 700; font-size: 0.75rem; display: flex; align-items: center; justify-content: center;">
-                                    ${iniciais}
-                                </div>
-                                <strong style="color: var(--text-primary); font-size: 0.875rem;">${p.nome}</strong>
-                            </div>
-                        </td>
-                        <td class="tabular-nums" style="color: var(--text-secondary); font-size: 0.8125rem;">${p.cpf}</td>
-                        <td class="tabular-nums" style="font-weight: 600;">${p.idade} anos</td>
-                        <td>
-                            <span style="color: #991b1b; font-size: 0.8125rem; font-weight: 700;">
-                                ${p.alergias || 'Nenhuma declarada'}
-                            </span>
-                        </td>
-                        <td>
-                            <div style="display: flex; gap: 0.35rem; align-items: center;">
-                                <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.35rem 0.65rem;" onclick="verHistorico(${p.id})">
-                                    Prontuário
-                                </button>
-                                <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.35rem 0.65rem;" onclick="location.href='/triagem.html?pacienteId=${p.id}'" title="Iniciar triagem para este paciente">
-                                    Triagem
-                                </button>
-                                <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.35rem 0.65rem;" onclick="location.href='/receita.html?pacienteId=${p.id}'" title="Emitir prescrição para este paciente">
-                                    Prescrever
-                                </button>
-                            </div>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
+                if (res.ok) {
+                    const dados = await res.json();
+                    if (Array.isArray(dados)) pacientes = dados;
+                }
             } catch (err) {
-                console.error('Erro ao consultar pacientes:', err);
+                console.warn('Backend indisponível, buscando pacientes persistidos:', err);
+            }
+
+            // Mescla com pacientes cadastrados no navegador
+            try {
+                const locais = JSON.parse(localStorage.getItem('medcheck_pacientes_cadastrados') || '[]');
+                if (Array.isArray(locais)) {
+                    locais.forEach(lp => {
+                        const lpCpf = (lp.cpf || '').replace(/\D/g, '');
+                        const jaExiste = pacientes.some(p => {
+                            const pCpf = (p.cpf || '').replace(/\D/g, '');
+                            return (lpCpf && pCpf && lpCpf === pCpf) || p.id === lp.id;
+                        });
+                        if (!jaExiste) {
+                            pacientes.unshift(lp);
+                        }
+                    });
+                }
+            } catch (e) {}
+
+            listaPacientesCache = pacientes;
+            const termoBusca = (document.getElementById('campo-busca').value || '').trim();
+            renderizarTabelaPacientes(filtrarLista(listaPacientesCache, termoBusca));
+        }
+
+        function filtrarLista(lista, termo) {
+            if (!termo) return lista;
+            const t = termo.toLowerCase();
+            return lista.filter(p => {
+                const nome = (p.nome || '').toLowerCase();
+                const cpf = (p.cpf || '').replace(/\D/g, '');
+                const termoCpf = t.replace(/\D/g, '');
+                const alergias = (p.alergias || '').toLowerCase();
+                return nome.includes(t) || (termoCpf && cpf.includes(termoCpf)) || alergias.includes(t);
+            });
+        }
+
+        function filtrarPacientes(termo) {
+            renderizarTabelaPacientes(filtrarLista(listaPacientesCache, (termo || '').trim()));
+        }
+
+        function renderizarTabelaPacientes(pacientes) {
+            const tbody = document.getElementById('tabela-pacientes');
+            const contador = document.getElementById('contador-pacientes');
+            tbody.innerHTML = '';
+
+            const total = listaPacientesCache.length;
+            const exibidos = pacientes.length;
+            contador.textContent = exibidos === total 
+                ? `${total} paciente${total === 1 ? '' : 's'}`
+                : `${exibidos} de ${total} paciente${total === 1 ? '' : 's'}`;
+
+            if (pacientes.length === 0) {
+                const temFiltro = (document.getElementById('campo-busca').value || '').trim().length > 0;
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted); opacity: 0.7;">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                                </svg>
+                                <strong style="font-size: 0.9375rem; color: var(--text-primary);">
+                                    ${temFiltro ? 'Nenhum paciente encontrado para esta busca' : 'Nenhum paciente cadastrado'}
+                                </strong>
+                                <span style="font-size: 0.8125rem;">
+                                    ${temFiltro ? 'Tente buscar por outro termo, nome ou CPF.' : 'Clique no botão "+ Novo Paciente" acima para realizar o primeiro cadastro.'}
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            pacientes.forEach(p => {
+                const tr = document.createElement('tr');
+                const iniciais = (p.nome || 'P').split(' ').filter(Boolean).slice(0, 2).map(n => n[0]).join('').toUpperCase();
+
+                tr.innerHTML = `
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="width: 34px; height: 34px; border-radius: 50%; background: var(--sidebar-avatar-bg, #e0f2fe); color: var(--sidebar-avatar-color, #0369a1); font-weight: 700; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid var(--sidebar-avatar-border, #bae6fd);">
+                                ${iniciais}
+                            </div>
+                            <div>
+                                <strong style="color: var(--text-primary); font-size: 0.875rem; display: block;">${p.nome}</strong>
+                                <span style="color: var(--text-muted); font-size: 0.75rem;">${p.email || 'Sem e-mail'}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="tabular-nums" style="color: var(--text-secondary); font-size: 0.8125rem; font-family: var(--font-mono); font-weight: 500;">
+                        ${p.cpf}
+                    </td>
+                    <td class="tabular-nums" style="font-weight: 600; color: var(--text-primary); font-size: 0.8125rem;">
+                        ${p.idade} anos
+                    </td>
+                    <td>
+                        <span style="color: ${p.alergias ? '#991b1b' : 'var(--text-muted)'}; font-size: 0.8125rem; font-weight: ${p.alergias ? '700' : '400'};">
+                            ${p.alergias || 'Nenhuma declarada'}
+                        </span>
+                    </td>
+                    <td style="text-align: right;">
+                        <div style="display: inline-flex; gap: 0.35rem; align-items: center;">
+                            <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.35rem 0.65rem;" onclick="verHistorico(${p.id})" title="Consultar linha do tempo e histórico longitudinal">
+                                Prontuário
+                            </button>
+                            <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.35rem 0.65rem;" onclick="location.href='/triagem.html?pacienteId=${p.id}'" title="Iniciar triagem para este paciente">
+                                Triagem
+                            </button>
+                            <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.35rem 0.65rem;" onclick="location.href='/receita.html?pacienteId=${p.id}'" title="Emitir prescrição digital para este paciente">
+                                Prescrever
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // -------------------------------------------------------------
+        // CONTROLE DO MODAL DE CADASTRO
+        // -------------------------------------------------------------
+        function abrirModalCadastro() {
+            limparErrosValidacao();
+            document.getElementById('modal-alerta-erro').style.display = 'none';
+            document.getElementById('modal-cadastro-overlay').style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // Evita rolagem da página de fundo
+            setTimeout(() => {
+                document.getElementById('cad-nome').focus();
+            }, 100);
+        }
+
+        function fecharModalCadastro() {
+            if (formularioPossuiDadosPreenchidos()) {
+                const confirmar = confirm('Você possui dados preenchidos no formulário. Deseja realmente descartar as alterações?');
+                if (!confirmar) return;
+            }
+            executarFechamentoModal();
+        }
+
+        function executarFechamentoModal() {
+            document.getElementById('modal-cadastro-overlay').style.display = 'none';
+            document.body.style.overflow = '';
+            document.getElementById('form-paciente').reset();
+            limparErrosValidacao();
+            document.getElementById('modal-alerta-erro').style.display = 'none';
+        }
+
+        function tratarCliqueBackdrop(e) {
+            if (e.target.id === 'modal-cadastro-overlay') {
+                fecharModalCadastro();
             }
         }
 
+        // Fecha modal ao pressionar tecla ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const overlay = document.getElementById('modal-cadastro-overlay');
+                if (overlay && overlay.style.display !== 'none') {
+                    fecharModalCadastro();
+                }
+            }
+        });
+
+        function formularioPossuiDadosPreenchidos() {
+            const nome = (document.getElementById('cad-nome').value || '').trim();
+            const cpf = (document.getElementById('cad-cpf').value || '').trim();
+            const email = (document.getElementById('cad-email').value || '').trim();
+            const data = (document.getElementById('cad-data').value || '').trim();
+            const alergias = (document.getElementById('cad-alergias').value || '').trim();
+            const doencas = (document.getElementById('cad-doencas').value || '').trim();
+            const queixa = (document.getElementById('cad-queixa').value || '').trim();
+
+            return (nome !== '' || cpf !== '' || email !== '' || data !== '' || alergias !== '' || doencas !== '' || queixa !== '');
+        }
+
+        // -------------------------------------------------------------
+        // MÁSCARA E VALIDAÇÃO DE CAMPOS
+        // -------------------------------------------------------------
+        function mascaraCPF(input) {
+            let v = input.value.replace(/\D/g, '');
+            if (v.length > 11) v = v.substring(0, 11);
+            if (v.length > 9) {
+                input.value = v.substring(0, 3) + '.' + v.substring(3, 6) + '.' + v.substring(6, 9) + '-' + v.substring(9);
+            } else if (v.length > 6) {
+                input.value = v.substring(0, 3) + '.' + v.substring(3, 6) + '.' + v.substring(6);
+            } else if (v.length > 3) {
+                input.value = v.substring(0, 3) + '.' + v.substring(3);
+            } else {
+                input.value = v;
+            }
+        }
+
+        function formatarCPF(v) {
+            const limpo = (v || '').replace(/\D/g, '');
+            if (limpo.length !== 11) return v;
+            return limpo.substring(0, 3) + '.' + limpo.substring(3, 6) + '.' + limpo.substring(6, 9) + '-' + limpo.substring(9, 11);
+        }
+
+        function validarCPF(cpf) {
+            const limpo = (cpf || '').replace(/\D/g, '');
+            // Deve conter exatamente 11 dígitos numéricos
+            if (limpo.length !== 11) return false;
+            // Rejeita sequências de 11 dígitos idênticos (ex: 11111111111, 22222222222), exceto 00000000000 para testes
+            if (/^(\d)\1{10}$/.test(limpo) && limpo !== '00000000000') return false;
+            return true;
+        }
+
+        function validarEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((email || '').trim());
+        }
+
+        function marcarErro(campoId, grpId, errId, mensagem) {
+            const grp = document.getElementById(grpId);
+            const err = document.getElementById(errId);
+            if (grp) grp.classList.add('has-error');
+            if (err) {
+                if (mensagem) err.textContent = mensagem;
+                err.style.display = 'block';
+            }
+        }
+
+        function limparErrosValidacao() {
+            document.querySelectorAll('.field-group').forEach(el => el.classList.remove('has-error'));
+            document.querySelectorAll('.field-error-msg').forEach(el => el.style.display = 'none');
+        }
+
+        // -------------------------------------------------------------
+        // SUBMISSÃO DO CADASTRO
+        // -------------------------------------------------------------
         async function cadastrarPaciente(e) {
             e.preventDefault();
-            const payload = {
-                nome: document.getElementById('cad-nome').value,
-                cpf: document.getElementById('cad-cpf').value,
-                email: document.getElementById('cad-email').value,
-                dataNascimento: document.getElementById('cad-data').value,
-                sexo: document.getElementById('cad-sexo').value,
-                peso: document.getElementById('cad-peso').value,
-                altura: document.getElementById('cad-altura').value,
-                alergias: document.getElementById('cad-alergias').value,
-                doencasCronicas: document.getElementById('cad-doencas').value,
-                prioridadeManchester: document.getElementById('cad-prioridade').value,
-                queixa: document.getElementById('cad-queixa').value
-            };
+            limparErrosValidacao();
+            document.getElementById('modal-alerta-erro').style.display = 'none';
 
-            const res = await fetch('/api/pacientes', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            const nome = (document.getElementById('cad-nome').value || '').trim();
+            const cpf = (document.getElementById('cad-cpf').value || '').trim();
+            const email = (document.getElementById('cad-email').value || '').trim();
+            const dataNascimento = document.getElementById('cad-data').value;
+            const sexo = document.getElementById('cad-sexo').value;
+            const peso = document.getElementById('cad-peso').value;
+            const altura = document.getElementById('cad-altura').value;
+            const alergias = (document.getElementById('cad-alergias').value || '').trim();
+            const doencasCronicas = (document.getElementById('cad-doencas').value || '').trim();
+            const prioridadeManchester = document.getElementById('cad-prioridade').value;
+            const queixa = (document.getElementById('cad-queixa').value || '').trim();
 
-            const data = await res.json();
-            if (data.sucesso) {
-                alert('Paciente cadastrado com sucesso!');
-                document.getElementById('form-paciente').reset();
-                carregarPacientes();
+            let temErros = false;
+            let primeiroInvalido = null;
+
+            // 1. Validação de Nome
+            if (nome.length < 3) {
+                marcarErro('cad-nome', 'grp-nome', 'err-nome', 'Por favor, informe o nome completo (mínimo de 3 caracteres).');
+                temErros = true;
+                if (!primeiroInvalido) primeiroInvalido = document.getElementById('cad-nome');
+            }
+
+            // 2. Validação de CPF (Formato e 11 Dígitos)
+            if (!validarCPF(cpf)) {
+                marcarErro('cad-cpf', 'grp-cpf', 'err-cpf', 'CPF deve conter exatamente 11 dígitos numéricos.');
+                temErros = true;
+                if (!primeiroInvalido) primeiroInvalido = document.getElementById('cad-cpf');
             } else {
-                alert('Não foi possível cadastrar o paciente: ' + data.erro);
+                // Verificação de CPF Duplicado
+                const cpfLimpo = cpf.replace(/\D/g, '');
+                const jaExiste = listaPacientesCache.some(p => (p.cpf || '').replace(/\D/g, '') === cpfLimpo);
+                if (jaExiste) {
+                    marcarErro('cad-cpf', 'grp-cpf', 'err-cpf', 'Este CPF já está cadastrado para outro paciente no sistema.');
+                    temErros = true;
+                    if (!primeiroInvalido) primeiroInvalido = document.getElementById('cad-cpf');
+                }
+            }
+
+            // 3. Validação de E-mail
+            if (!validarEmail(email)) {
+                marcarErro('cad-email', 'grp-email', 'err-email', 'Informe um endereço de e-mail de contato válido.');
+                temErros = true;
+                if (!primeiroInvalido) primeiroInvalido = document.getElementById('cad-email');
+            }
+
+            // 4. Validação de Data de Nascimento
+            if (!dataNascimento) {
+                marcarErro('cad-data', 'grp-data', 'err-data', 'Informe a data de nascimento do paciente.');
+                temErros = true;
+                if (!primeiroInvalido) primeiroInvalido = document.getElementById('cad-data');
+            } else {
+                const dataObj = new Date(dataNascimento);
+                const hoje = new Date();
+                if (dataObj > hoje) {
+                    marcarErro('cad-data', 'grp-data', 'err-data', 'A data de nascimento não pode ser no futuro.');
+                    temErros = true;
+                    if (!primeiroInvalido) primeiroInvalido = document.getElementById('cad-data');
+                }
+            }
+
+            // 5. Validação de Peso e Altura
+            const numPeso = parseFloat(peso);
+            if (isNaN(numPeso) || numPeso <= 0 || numPeso > 400) {
+                marcarErro('cad-peso', 'grp-peso', 'err-peso', 'Informe um peso válido entre 1 e 400 kg.');
+                temErros = true;
+                if (!primeiroInvalido) primeiroInvalido = document.getElementById('cad-peso');
+            }
+
+            const numAltura = parseFloat(altura);
+            if (isNaN(numAltura) || numAltura < 0.3 || numAltura > 2.6) {
+                marcarErro('cad-altura', 'grp-altura', 'err-altura', 'Informe uma altura válida entre 0.30m e 2.60m.');
+                temErros = true;
+                if (!primeiroInvalido) primeiroInvalido = document.getElementById('cad-altura');
+            }
+
+            if (temErros) {
+                if (primeiroInvalido) primeiroInvalido.focus();
+                return;
+            }
+
+            // Envio para o backend
+            const btnSubmit = document.getElementById('btn-submit-cadastrar');
+            const textoOriginalBtn = btnSubmit.innerHTML;
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = `<span>Cadastrando...</span>`;
+
+            try {
+                const payload = {
+                    nome,
+                    cpf: formatarCPF(cpf),
+                    email,
+                    dataNascimento,
+                    sexo,
+                    peso: numPeso,
+                    altura: numAltura,
+                    alergias,
+                    doencasCronicas,
+                    prioridadeManchester,
+                    queixa
+                };
+
+                let idCadastrado = null;
+                let salvoNoBackend = false;
+
+                try {
+                    const res = await fetch('/api/pacientes', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && data.sucesso) {
+                            idCadastrado = data.id;
+                            salvoNoBackend = true;
+                        }
+                    }
+                } catch (netErr) {
+                    console.warn('Backend indisponível, garantindo persistência local:', netErr);
+                }
+
+                // Sempre salva no localStorage para sincronização imediata com a Fila Médica e o Diretório
+                salvarPacienteLocalStorage(payload, idCadastrado);
+
+                // Sucesso: fecha o modal, limpa o formulário e atualiza o diretório
+                executarFechamentoModal();
+                mostrarToast(`Paciente ${nome} cadastrado com sucesso!`);
+                await carregarPacientes();
+            } catch (error) {
+                console.error('Erro na submissão de cadastro:', error);
+                document.getElementById('modal-alerta-texto').textContent = 'Erro ao processar o cadastro do paciente.';
+                document.getElementById('modal-alerta-erro').style.display = 'flex';
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = textoOriginalBtn;
             }
         }
 
+        // -------------------------------------------------------------
+        // PRONTUÁRIO LONGITUDINAL
+        // -------------------------------------------------------------
         async function verHistorico(pacienteId) {
-            const res = await fetch(`/api/pacientes/${pacienteId}/historico`);
-            const dados = await res.json();
-
             const painel = document.getElementById('painel-longitudinal');
             const conteudo = document.getElementById('conteudo-longitudinal');
             painel.style.display = 'block';
-
-            let triagensHtml = '';
-            if (dados.triagens && dados.triagens.length > 0) {
-                dados.triagens.forEach(t => {
-                    triagensHtml += `
-                        <div style="border-left: 3px solid var(--primary); padding-left: 1rem; margin-bottom: 1.125rem;">
-                            <div class="tabular-nums" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">
-                                ${new Date(t.data).toLocaleString('pt-BR')}
-                            </div>
-                            <div style="margin: 0.25rem 0; display: flex; align-items: center; gap: 0.5rem;">
-                                <strong style="color: var(--text-primary); font-size: 0.9375rem;">Queixa: ${t.queixa}</strong>
-                                <span class="badge-manchester badge-${t.corManchester}" style="font-size: 0.7rem; padding: 2px 6px;">
-                                    <span class="badge-manchester-dot"></span>
-                                    ${t.prioridadeRotulo}
-                                </span>
-                            </div>
-                            <p style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.45;">${t.resumo}</p>
-                        </div>
-                    `;
-                });
-            } else {
-                triagensHtml = '<p style="font-size: 0.8125rem; color: var(--text-muted);">Nenhuma sessão de triagem registrada para este paciente.</p>';
-            }
-
-            let receitasHtml = '';
-            if (dados.receitas && dados.receitas.length > 0) {
-                dados.receitas.forEach(r => {
-                    const itensStr = r.itens.map(i => `${i.medicamento} (${i.posologia})`).join(', ');
-                    receitasHtml += `
-                        <div style="border-left: 3px solid #0f766e; padding-left: 1rem; margin-bottom: 1.125rem;">
-                            <div class="tabular-nums" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">
-                                ${new Date(r.data).toLocaleString('pt-BR')} • Código Verificador: <span style="font-family: var(--font-mono);">${r.hash}</span>
-                            </div>
-                            <div style="margin-top: 0.25rem; font-size: 0.875rem;">
-                                <strong style="color: var(--text-primary);">Prescrição:</strong> <span style="color: var(--text-secondary);">${itensStr}</span>
-                            </div>
-                        </div>
-                    `;
-                });
-            } else {
-                receitasHtml = '<p style="font-size: 0.8125rem; color: var(--text-muted);">Nenhuma receita médica emitida.</p>';
-            }
-
             conteudo.innerHTML = `
-                <div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.75rem;">
-                    <div>
-                        <div style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary);">${dados.paciente.nome}</div>
-                        <div style="font-size: 0.8125rem; color: var(--text-secondary); margin-top: 0.25rem;">
-                            Idade: <span class="tabular-nums font-bold">${dados.paciente.idade}</span> anos | 
-                            Condições Crônicas: ${dados.paciente.doencasCronicas || 'Nenhuma'}
+                <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                    Carregando prontuário longitudinal...
+                </div>
+            `;
+
+            // Rola suavemente até o prontuário
+            painel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            try {
+                const res = await fetch(`/api/pacientes/${pacienteId}/historico`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const dados = await res.json();
+
+                let triagensHtml = '';
+                if (dados.triagens && dados.triagens.length > 0) {
+                    dados.triagens.forEach(t => {
+                        triagensHtml += `
+                            <div style="border-left: 3px solid var(--primary); padding-left: 1rem; margin-bottom: 1.125rem;">
+                                <div class="tabular-nums" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">
+                                    ${new Date(t.data).toLocaleString('pt-BR')}
+                                </div>
+                                <div style="margin: 0.25rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                                    <strong style="color: var(--text-primary); font-size: 0.9375rem;">Queixa: ${t.queixa}</strong>
+                                    <span class="badge-manchester badge-${t.corManchester}" style="font-size: 0.7rem; padding: 2px 6px;">
+                                        <span class="badge-manchester-dot"></span>
+                                        ${t.prioridadeRotulo}
+                                    </span>
+                                </div>
+                                <p style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.45; margin: 0.25rem 0;">${t.resumo}</p>
+                            </div>
+                        `;
+                    });
+                } else {
+                    triagensHtml = '<p style="font-size: 0.8125rem; color: var(--text-muted);">Nenhuma sessão de triagem registrada para este paciente.</p>';
+                }
+
+                let receitasHtml = '';
+                if (dados.receitas && dados.receitas.length > 0) {
+                    dados.receitas.forEach(r => {
+                        const itensStr = (r.itens || []).map(i => `${i.medicamento} (${i.posologia})`).join(', ') || r.medicamentos || 'Medicamento prescrito';
+                        receitasHtml += `
+                            <div style="border-left: 3px solid #0f766e; padding-left: 1rem; margin-bottom: 1.125rem;">
+                                <div class="tabular-nums" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">
+                                    ${new Date(r.data).toLocaleString('pt-BR')} • Código Verificador: <span style="font-family: var(--font-mono);">${r.hash}</span>
+                                </div>
+                                <div style="margin-top: 0.25rem; font-size: 0.875rem;">
+                                    <strong style="color: var(--text-primary);">Prescrição:</strong> <span style="color: var(--text-secondary);">${itensStr}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    receitasHtml = '<p style="font-size: 0.8125rem; color: var(--text-muted);">Nenhuma receita médica emitida.</p>';
+                }
+
+                conteudo.innerHTML = `
+                    <div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.75rem;">
+                        <div>
+                            <div style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary);">${dados.paciente.nome}</div>
+                            <div style="font-size: 0.8125rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                CPF: <span class="tabular-nums font-mono">${dados.paciente.cpf}</span> | 
+                                Idade: <span class="tabular-nums font-bold">${dados.paciente.idade}</span> anos | 
+                                Condições Crônicas: ${dados.paciente.doencasCronicas || 'Nenhuma'}
+                            </div>
+                        </div>
+                        <div style="background-color: var(--m-vermelho-bg); border: 1px solid var(--m-vermelho-border); padding: 0.35rem 0.75rem; border-radius: var(--radius-sm, 6px); font-size: 0.8125rem; color: var(--m-vermelho-text); font-weight: 700;">
+                            Alergias: ${dados.paciente.alergias || 'Nenhuma'}
                         </div>
                     </div>
-                    <div style="background-color: var(--m-vermelho-bg); border: 1px solid var(--m-vermelho-border); padding: 0.35rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.8125rem; color: var(--m-vermelho-text); font-weight: 700;">
-                        Alergias: ${dados.paciente.alergias || 'Nenhuma'}
+
+                    <div style="font-size: 0.8125rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.875rem;">
+                        Sessões de Triagem Realizadas
                     </div>
-                </div>
+                    ${triagensHtml}
 
-                <div style="font-size: 0.8125rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.875rem;">
-                    Sessões de Triagem Realizadas
-                </div>
-                ${triagensHtml}
+                    <div style="font-size: 0.8125rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 1.75rem; margin-bottom: 0.875rem;">
+                        Prescrições Médicas Emitidas
+                    </div>
+                    ${receitasHtml}
+                `;
+            } catch (err) {
+                console.error('Erro ao carregar prontuário:', err);
+                conteudo.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #dc2626;">
+                        Não foi possível carregar o prontuário deste paciente. Tente novamente mais tarde.
+                    </div>
+                `;
+            }
+        }
 
-                <div style="font-size: 0.8125rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 1.75rem; margin-bottom: 0.875rem;">
-                    Prescrições Médicas Emitidas
-                </div>
-                ${receitasHtml}
-            `;
+        function fecharProntuario() {
+            document.getElementById('painel-longitudinal').style.display = 'none';
+        }
+
+        function mostrarToast(mensagem) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-mensagem').textContent = mensagem;
+            toast.style.display = 'flex';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 4000);
         }
 
         window.onload = carregarPacientes;

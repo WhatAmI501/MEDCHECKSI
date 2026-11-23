@@ -113,7 +113,7 @@ const server = http.createServer(async (req, res) => {
     // 2. Proxy reverso para a API Core Java (Porta 8080)
     if (pathname.startsWith('/api/')) {
         const javaUrl = `${JAVA_API_BASE}${req.url}`;
-        
+
         let bodyBuffer = [];
         req.on('data', chunk => bodyBuffer.push(chunk));
         req.on('end', async () => {
@@ -124,7 +124,8 @@ const server = http.createServer(async (req, res) => {
                     headers: {
                         'Content-Type': req.headers['content-type'] || 'application/json'
                     },
-                    body: ['POST', 'PUT', 'PATCH'].includes(req.method) ? body : undefined
+                    body: ['POST', 'PUT', 'PATCH'].includes(req.method) ? body : undefined,
+                    signal: AbortSignal.timeout(3000)
                 });
 
                 const responseText = await javaRes.text();

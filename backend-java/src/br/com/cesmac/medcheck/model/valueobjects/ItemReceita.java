@@ -35,6 +35,10 @@ public final class ItemReceita implements Serializable {
         return medicamento;
     }
 
+    public String getNomeMedicamento() {
+        return medicamento;
+    }
+
     public String getPrincipioAtivo() {
         return principioAtivo;
     }

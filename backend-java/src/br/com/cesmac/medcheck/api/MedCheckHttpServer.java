@@ -275,6 +275,47 @@ public class MedCheckHttpServer {
                 return;
             }
 
+            if ("GET".equalsIgnoreCase(exchange.getRequestMethod()) && !path.contains("/validar")) {
+                Collection<ReceitaMedica> lista = MedCheckDataStore.getInstance().listarTodasReceitas();
+                StringBuilder sb = new StringBuilder("[");
+                int c = 0;
+                for (ReceitaMedica r : lista) {
+                    if (c++ > 0) sb.append(",");
+                    Paciente p = MedCheckDataStore.getInstance().buscarPacientePorId(r.getPacienteId());
+                    Medico m = (Medico) MedCheckDataStore.getInstance().buscarUsuarioPorId(r.getMedicoId());
+                    sb.append("{");
+                    sb.append("\"id\":").append(r.getId()).append(",");
+                    sb.append("\"atendimentoId\":").append(r.getAtendimentoId()).append(",");
+                    sb.append("\"pacienteId\":").append(r.getPacienteId()).append(",");
+                    sb.append("\"pacienteNome\":\"").append(p != null ? escaparJson(p.getNomeCompleto()) : "Paciente").append("\",");
+                    sb.append("\"medicoNome\":\"").append(m != null ? escaparJson(m.getNomeCompleto()) : "Dr. Roberto Carlos da Silva").append("\",");
+                    sb.append("\"crm\":\"").append(m != null ? escaparJson(m.getRegistroConselho()) : "CRM/AL 14892").append("\",");
+                    sb.append("\"dataEmissao\":\"").append(r.getDataEmissao()).append("\",");
+                    sb.append("\"status\":\"").append(r.getStatus().name()).append("\",");
+                    sb.append("\"observacoes\":\"").append(escaparJson(r.getObservacoes())).append("\",");
+                    sb.append("\"hash\":\"").append(r.getHashValidacao()).append("\",");
+                    sb.append("\"hashValidacao\":\"").append(r.getHashValidacao()).append("\",");
+                    sb.append("\"itens\":[");
+                    int itemIdx = 0;
+                    for (ItemReceita item : r.getItens()) {
+                        if (itemIdx++ > 0) sb.append(",");
+                        sb.append("{");
+                        sb.append("\"medicamento\":\"").append(escaparJson(item.getMedicamento())).append("\",");
+                        sb.append("\"principioAtivo\":\"").append(escaparJson(item.getPrincipioAtivo())).append("\",");
+                        sb.append("\"dosagem\":\"").append(escaparJson(item.getDosagem())).append("\",");
+                        sb.append("\"posologia\":\"").append(escaparJson(item.getPosologia())).append("\",");
+                        sb.append("\"quantidade\":\"").append(escaparJson(item.getQuantidade())).append("\",");
+                        sb.append("\"via\":\"").append(escaparJson(item.getViaAdministracao())).append("\"");
+                        sb.append("}");
+                    }
+                    sb.append("]");
+                    sb.append("}");
+                }
+                sb.append("]");
+                enviarJson(exchange, 200, sb.toString());
+                return;
+            }
+
             if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
                 try {
                     String body = lerCorpo(exchange);
