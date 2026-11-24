@@ -8,8 +8,8 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const PORT = 3000;
-const JAVA_API_BASE = 'http://127.0.0.1:8080';
+const PORT = process.env.PORT || 3000;
+const JAVA_API_BASE = process.env.JAVA_API_BASE || 'http://127.0.0.1:8080';
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
 // Tipos MIME para arquivos estáticos
@@ -236,7 +236,7 @@ const server = http.createServer(async (req, res) => {
     });
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`====================================================================`);
     console.log(`  MEDCHECK (MedIA) - Frontend Web & BFF Node.JS ativo`);
     console.log(`  Acesse no navegador: http://localhost:${PORT}`);

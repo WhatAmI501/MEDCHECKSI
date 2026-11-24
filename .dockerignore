@@ -1,0 +1,11 @@
+.git
+.gitignore
+.agents
+.codex
+.impeccable
+venv
+docs
+*.md
+*.sql
+*.txt
+backend-java/bin
