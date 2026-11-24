@@ -589,13 +589,13 @@
                     <div class="form-row-2">
                         <div class="field-group" id="grp-peso">
                             <label for="cad-peso">Peso (kg):</label>
-                            <input type="number" id="cad-peso" step="0.1" min="1" max="350" value="70.0">
+                            <input type="number" id="cad-peso" step="0.1" min="1" max="350" placeholder="Ex: 60">
                             <div class="field-error-msg" id="err-peso">Peso deve ser um valor positivo válido.</div>
                         </div>
 
                         <div class="field-group" id="grp-altura">
                             <label for="cad-altura">Altura (m):</label>
-                            <input type="number" id="cad-altura" step="0.01" min="0.3" max="2.5" value="1.70">
+                            <input type="number" id="cad-altura" step="0.01" min="0.3" max="2.5" placeholder="Ex: 1,7">
                             <div class="field-error-msg" id="err-altura">Altura deve ser entre 0.30m e 2.50m.</div>
                         </div>
                     </div>
@@ -1036,14 +1036,14 @@
             }
 
             // 5. Validação de Peso e Altura
-            const numPeso = parseFloat(peso);
+            const numPeso = parseFloat(String(peso || '').replace(',', '.'));
             if (isNaN(numPeso) || numPeso <= 0 || numPeso > 400) {
                 marcarErro('cad-peso', 'grp-peso', 'err-peso', 'Informe um peso válido entre 1 e 400 kg.');
                 temErros = true;
                 if (!primeiroInvalido) primeiroInvalido = document.getElementById('cad-peso');
             }
 
-            const numAltura = parseFloat(altura);
+            const numAltura = parseFloat(String(altura || '').replace(',', '.'));
             if (isNaN(numAltura) || numAltura < 0.3 || numAltura > 2.6) {
                 marcarErro('cad-altura', 'grp-altura', 'err-altura', 'Informe uma altura válida entre 0.30m e 2.60m.');
                 temErros = true;

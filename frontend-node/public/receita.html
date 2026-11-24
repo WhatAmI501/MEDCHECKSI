@@ -957,16 +957,46 @@
                     }
                 } catch (e) {}
 
-                select.innerHTML = '';
-
+                // Fallback com base de pacientes padronizada caso a lista esteja vazia
                 if (pacientes.length === 0) {
-                    select.innerHTML = '<option value="">Nenhum paciente cadastrado</option>';
-                    atualizarAvisosAlergia();
-                    return;
+                    pacientes = [
+                        { id: 5, nome: 'José Ferreira dos Santos', cpf: '888.777.666-55', alergias: 'Penicilina, Amoxicilina' },
+                        { id: 4, nome: 'Mariana Oliveira Costa', cpf: '555.444.333-22', alergias: 'Dipirona' },
+                        { id: 1, nome: 'Felipe Santos da Silva', cpf: '123.456.789-00', alergias: '' },
+                        { id: 2, nome: 'Ana Beatriz Lima', cpf: '234.567.890-12', alergias: 'Sulfa' },
+                        { id: 3, nome: 'Carlos Eduardo Pereira', cpf: '345.678.901-23', alergias: '' }
+                    ];
                 }
 
                 const urlParams = new URLSearchParams(window.location.search);
                 const pacienteUrlId = urlParams.get('pacienteId');
+                const pacienteUrlNome = (urlParams.get('nome') || urlParams.get('pacienteNome') || '').trim();
+
+                // Caso o paciente informado na URL não conste na lista, adiciona-o dinamicamente
+                if (pacienteUrlNome || pacienteUrlId) {
+                    const jaExiste = pacientes.some(p =>
+                        (pacienteUrlId && String(p.id) === String(pacienteUrlId)) ||
+                        (pacienteUrlNome && p.nome && p.nome.trim().toLowerCase() === pacienteUrlNome.toLowerCase())
+                    );
+                    if (!jaExiste && pacienteUrlNome) {
+                        let alergiasDetectadas = '';
+                        try {
+                            const fila = JSON.parse(localStorage.getItem('medcheck_fila_persistida') || '[]');
+                            const itemFila = fila.find(f => f.pacienteNome === pacienteUrlNome || String(f.pacienteId) === String(pacienteUrlId));
+                            if (itemFila && itemFila.alergias) alergiasDetectadas = itemFila.alergias;
+                        } catch (e) {}
+
+                        pacientes.unshift({
+                            id: pacienteUrlId || Date.now(),
+                            nome: pacienteUrlNome,
+                            alergias: alergiasDetectadas
+                        });
+                    }
+                }
+
+                select.innerHTML = '';
+
+                let selecionou = false;
 
                 pacientes.forEach((p, index) => {
                     const opt = document.createElement('option');
@@ -981,15 +1011,26 @@
                         opt.textContent = `${p.nome} (Sem histórico de alergias)`;
                     }
 
-                    if (pacienteUrlId && String(p.id) === String(pacienteUrlId)) {
+                    const matchId = pacienteUrlId && String(p.id) === String(pacienteUrlId);
+                    const matchNome = pacienteUrlNome && p.nome && p.nome.trim().toLowerCase() === pacienteUrlNome.toLowerCase();
+
+                    if (!selecionou && (matchId || matchNome)) {
                         opt.selected = true;
-                    } else if (!pacienteUrlId && index === 0) {
+                        selecionou = true;
+                    } else if (!selecionou && !pacienteUrlId && !pacienteUrlNome && index === 0) {
                         opt.selected = true;
                     }
                     select.appendChild(opt);
                 });
 
                 atualizarAvisosAlergia();
+
+                // Abre o modal automaticamente se solicitado nos parâmetros da URL (ex: vindo da Fila Médica)
+                const deveAbrirModal = urlParams.get('abrirModal') === '1' || urlParams.get('prescrever') === '1';
+                if (deveAbrirModal && !window.modalPrescricaoAutoAberto) {
+                    window.modalPrescricaoAutoAberto = true;
+                    abrirModalPrescricao();
+                }
             } catch (err) {
                 console.error('Erro ao carregar pacientes:', err);
                 select.innerHTML = '<option value="">Erro ao carregar pacientes</option>';
@@ -1671,6 +1712,24 @@
                 // Salva no localStorage para persistência
                 try {
                     localStorage.setItem('medcheck_prescricoes_emitidas', JSON.stringify(listaPrescricoesCache));
+                } catch (e) {}
+
+                // Registra evento de notificação em tempo real para o Painel Geral (Dashboard)
+                try {
+                    const notificacoes = JSON.parse(localStorage.getItem('medcheck_notificacoes_painel') || '[]');
+                    const hashCurto = (hashGerado || '').substring(0, 16);
+                    notificacoes.unshift({
+                        id: 'rec_' + idGerado + '_' + Date.now(),
+                        tipo: 'prescricao',
+                        classe: 'alert-sucesso',
+                        corIcone: '#0ea5e9',
+                        icone: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>`,
+                        titulo: `Prescrição Emitida — ${pacienteNome}`,
+                        descricao: `Receituário digital emitido: ${medicamento} (${dosagem}). Assinatura com hash SHA-256 ativo (${hashCurto}...).`,
+                        tempo: 'Há poucos instantes • Certificação digital CFM',
+                        timestamp: Date.now()
+                    });
+                    localStorage.setItem('medcheck_notificacoes_painel', JSON.stringify(notificacoes.slice(0, 15)));
                 } catch (e) {}
 
                 // Atualiza a tabela na tela

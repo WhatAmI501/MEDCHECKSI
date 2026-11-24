@@ -218,6 +218,25 @@ public class MedCheckHttpServer {
                 exchange.sendResponseHeaders(204, -1);
                 return;
             }
+            String method = exchange.getRequestMethod();
+            String path = exchange.getRequestURI().getPath();
+
+            // Trata conclusão / remoção de atendimento da fila
+            if ("DELETE".equalsIgnoreCase(method) || ("POST".equalsIgnoreCase(method) && path.contains("/concluir"))) {
+                String[] parts = path.split("/");
+                if (parts.length >= 4) {
+                    try {
+                        int id = Integer.parseInt(parts[3]);
+                        clinicaService.concluirAtendimento(id, "Consulta médica concluída", "Orientações prestadas");
+                        enviarJson(exchange, 200, "{\"sucesso\":true,\"mensagem\":\"Atendimento concluído com sucesso\"}");
+                        return;
+                    } catch (Exception e) {
+                        enviarJson(exchange, 400, "{\"sucesso\":false,\"erro\":\"ID de atendimento inválido\"}");
+                        return;
+                    }
+                }
+            }
+
             List<Map<String, Object>> fila = clinicaService.obterFilaPriorizadaTeleatendimento();
             StringBuilder sb = new StringBuilder("[");
             int count = 0;

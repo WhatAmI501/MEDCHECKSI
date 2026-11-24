@@ -201,12 +201,12 @@
                             </svg>
                             Exportar JSON
                         </button>
-                        <button class="btn btn-primary" onclick="carregarAuditoriaCompleta()">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        <button class="btn btn-primary" id="btn-atualizar-trilha" onclick="carregarAuditoriaCompleta(true)" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                            <svg id="icon-atualizar-trilha" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
                             </svg>
-                            Atualizar Trilha
+                            <span id="label-atualizar-trilha">Atualizar Trilha</span>
                         </button>
                     </div>
                 </div>
@@ -253,50 +253,58 @@
                     </div>
                 </div>
 
-                <!-- Painel de Filtros e Busca -->
-                <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem 1.5rem;">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                            <span
-                                style="font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); margin-right: 0.5rem;">Módulo:</span>
-                            <button class="btn btn-secondary filter-btn active"
-                                onclick="filtrarPorModulo('TODOS', this)"
-                                style="padding: 0.3rem 0.75rem; font-size: 0.75rem;">Todos</button>
-                            <button class="btn btn-secondary filter-btn" onclick="filtrarPorModulo('TRIAGEM', this)"
-                                style="padding: 0.3rem 0.75rem; font-size: 0.75rem;">Triagem</button>
-                            <button class="btn btn-secondary filter-btn" onclick="filtrarPorModulo('RECEITA', this)"
-                                style="padding: 0.3rem 0.75rem; font-size: 0.75rem;">Prescrição</button>
-                            <button class="btn btn-secondary filter-btn" onclick="filtrarPorModulo('ATENDIMENTO', this)"
-                                style="padding: 0.3rem 0.75rem; font-size: 0.75rem;">Fila Médica</button>
-                            <button class="btn btn-secondary filter-btn" onclick="filtrarPorModulo('PACIENTE', this)"
-                                style="padding: 0.3rem 0.75rem; font-size: 0.75rem;">Pacientes</button>
-                            <button class="btn btn-secondary filter-btn" onclick="filtrarPorModulo('AUTH', this)"
-                                style="padding: 0.3rem 0.75rem; font-size: 0.75rem;">Autenticação</button>
+                <!-- Painel de Filtros e Busca Unificado -->
+                <div class="card" style="margin-bottom: 1.5rem; padding: 1.15rem 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                        <!-- Campo de Busca Rápida -->
+                        <div style="display: flex; align-items: center; gap: 0.6rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.45rem 0.85rem; flex: 1; min-width: 260px; max-width: 440px;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted); flex-shrink: 0;">
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg>
+                            <input type="text" id="filtro-busca" oninput="filtrarLogs()"
+                                placeholder="Buscar evento, descrição, IP..."
+                                style="border: none; outline: none; background: transparent; color: var(--text-primary); font-size: 0.875rem; width: 100%;"
+                                aria-label="Buscar eventos na trilha de auditoria">
                         </div>
-                        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-                            <div
-                                style="display: flex; align-items: center; gap: 0.4rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 0.25rem 0.65rem;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="11" cy="11" r="8" />
-                                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                                </svg>
-                                <input type="text" id="filtro-busca" oninput="filtrarLogs()"
-                                    placeholder="Buscar evento, IP ou termo..."
-                                    style="border: none; outline: none; background: transparent; color: var(--text-primary); font-size: 0.8125rem; min-width: 220px;"
-                                    aria-label="Busca de auditoria">
+
+                        <!-- Filtros Suspensos Padronizados -->
+                        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <label for="select-modulo" style="font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); margin: 0; white-space: nowrap;">
+                                    Módulo:
+                                </label>
+                                <select id="select-modulo" onchange="filtrarLogs()"
+                                    style="padding: 0.45rem 0.85rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary); font-size: 0.8125rem; font-weight: 500; cursor: pointer; min-width: 170px;">
+                                    <option value="TODOS">Todos os Módulos</option>
+                                    <option value="TRIAGEM">Triagem Virtual</option>
+                                    <option value="RECEITA">Prescrição Médica</option>
+                                    <option value="ATENDIMENTO">Fila de Atendimento</option>
+                                    <option value="PACIENTE">Gestão de Pacientes</option>
+                                    <option value="AUTH">Autenticação & Acesso</option>
+                                </select>
                             </div>
-                            <span style="font-size: 0.8125rem; font-weight: 700; color: var(--text-primary);">Tipo de
-                                Ação:</span>
-                            <select id="select-operacao" onchange="filtrarLogs()"
-                                style="padding: 0.35rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary); font-size: 0.8125rem;">
-                                <option value="">Todas as Operações</option>
-                                <option value="CREATE">CREATE / Criação</option>
-                                <option value="CONSULTA">CONSULTA / Leitura</option>
-                                <option value="BLOQUEIO">BLOQUEIO / Segurança Alérgica</option>
-                                <option value="UPDATE">UPDATE / Atualização</option>
-                            </select>
+
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <label for="select-operacao" style="font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); margin: 0; white-space: nowrap;">
+                                    Tipo de Ação:
+                                </label>
+                                <select id="select-operacao" onchange="filtrarLogs()"
+                                    style="padding: 0.45rem 0.85rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary); font-size: 0.8125rem; font-weight: 500; cursor: pointer; min-width: 180px;">
+                                    <option value="">Todas as Operações</option>
+                                    <option value="CREATE">CREATE / Criação</option>
+                                    <option value="CONSULTA">CONSULTA / Leitura</option>
+                                    <option value="BLOQUEIO">BLOQUEIO / Segurança</option>
+                                    <option value="UPDATE">UPDATE / Atualização</option>
+                                </select>
+                            </div>
+
+                            <!-- Botão Limpar Filtros -->
+                            <button id="btn-limpar-filtros" type="button" class="btn btn-secondary" onclick="limparFiltros()"
+                                style="font-size: 0.75rem; padding: 0.45rem 0.75rem; display: none;" title="Limpar todos os filtros aplicados">
+                                Limpar
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -350,37 +358,155 @@
         </div>
     </div>
 
+    <!-- Toast de Notificação do Sistema (Similar à Fila Priorizada) -->
+    <div id="toast"
+        style="display: none; position: fixed; bottom: 2rem; right: 2rem; background: var(--bg-card, #0f172a); color: var(--text-primary, #f8fafc); padding: 0.85rem 1.25rem; border-radius: 8px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.45), 0 8px 10px -6px rgba(0, 0, 0, 0.25); z-index: 9999; align-items: center; gap: 0.75rem; border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.15)); font-size: 0.875rem; max-width: 480px; transition: all 0.3s ease;">
+        <div id="toast-icone"
+            style="width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        </div>
+        <span id="toast-mensagem" style="line-height: 1.45; font-weight: 500;"></span>
+    </div>
+
+    <style>
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+
     <script>
         let logsCarregados = [];
         let moduloFiltroAtual = 'TODOS';
+        let toastTimeout = null;
 
-        async function carregarAuditoriaCompleta() {
-            try {
-                const res = await fetch('/api/auditoria');
-                logsCarregados = await res.json();
+        function mostrarToast(mensagem, tipo = 'info') {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-mensagem');
+            const iconeEl = document.getElementById('toast-icone');
+            if (!toast || !msgEl || !iconeEl) return;
 
-                document.getElementById('stat-total-logs').innerText = logsCarregados.length;
-                filtrarLogs();
-            } catch (err) {
-                console.error('Erro ao carregar auditoria:', err);
-                const tbody = document.getElementById('tabela-auditoria-completa');
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #dc2626; padding: 1.5rem;">Falha ao carregar trilha de auditoria: ${err.message}</td></tr>`;
+            msgEl.textContent = mensagem;
+
+            if (tipo === 'sucesso') {
+                iconeEl.style.backgroundColor = 'rgba(16, 185, 129, 0.2)';
+                iconeEl.style.color = '#10b981';
+                iconeEl.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+            } else if (tipo === 'erro') {
+                iconeEl.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
+                iconeEl.style.color = '#ef4444';
+                iconeEl.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+            } else {
+                iconeEl.style.backgroundColor = 'rgba(14, 165, 233, 0.2)';
+                iconeEl.style.color = '#0ea5e9';
+                iconeEl.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
+            }
+
+            toast.style.display = 'flex';
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.style.display = 'none';
+            }, 4500);
+        }
+
+        function atualizarMetricasGerais() {
+            const elTotal = document.getElementById('stat-total-logs');
+            if (elTotal) elTotal.innerText = logsCarregados.length;
+
+            const elModulos = document.getElementById('stat-modulos-ativos');
+            if (elModulos) {
+                const modulos = new Set(logsCarregados.map(l => (l.modulo || '').toUpperCase().trim()).filter(Boolean));
+                elModulos.innerText = Math.max(modulos.size, 5);
             }
         }
 
-        function filtrarPorModulo(modulo, btnElement) {
-            moduloFiltroAtual = modulo;
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            if (btnElement) btnElement.classList.add('active');
+        async function carregarAuditoriaCompleta(notificar = false) {
+            const btn = document.getElementById('btn-atualizar-trilha');
+            const icon = document.getElementById('icon-atualizar-trilha');
+            const label = document.getElementById('label-atualizar-trilha');
+
+            if (notificar) {
+                if (btn) btn.disabled = true;
+                if (icon) icon.style.animation = 'spin 0.8s linear infinite';
+                if (label) label.textContent = 'Atualizando...';
+            }
+
+            try {
+                const idsAnteriores = new Set(logsCarregados.map(l => String(l.id)));
+                const res = await fetch('/api/auditoria');
+                if (!res.ok) throw new Error('Status ' + res.status);
+                const novosDados = await res.json();
+
+                if (!Array.isArray(novosDados)) {
+                    throw new Error('Formato inválido retornado pelo servidor');
+                }
+
+                const novosRegistros = novosDados.filter(l => !idsAnteriores.has(String(l.id)));
+                const houveAlteracao = novosRegistros.length > 0 || (logsCarregados.length > 0 && novosDados.length !== logsCarregados.length);
+
+                logsCarregados = novosDados;
+
+                // Atualiza métricas e renderiza tabela
+                atualizarMetricasGerais();
+                filtrarLogs();
+
+                if (typeof marcarNotificacoesVistas === 'function') {
+                    marcarNotificacoesVistas();
+                }
+
+                if (notificar) {
+                    if (houveAlteracao) {
+                        const qtd = novosRegistros.length || Math.abs(novosDados.length - idsAnteriores.size);
+                        mostrarToast(`Trilha atualizada! ${qtd} novo(s) registro(s) de auditoria sincronizado(s).`, 'sucesso');
+                    } else {
+                        mostrarToast('Trilha de auditoria atualizada! Não há novos registros clínicos ou operacionais.', 'info');
+                    }
+                }
+            } catch (err) {
+                console.error('Erro ao carregar auditoria:', err);
+                if (notificar) {
+                    mostrarToast('Erro ao atualizar trilha de auditoria: ' + err.message, 'erro');
+                } else {
+                    const tbody = document.getElementById('tabela-auditoria-completa');
+                    if (tbody) {
+                        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #dc2626; padding: 1.5rem;">Falha ao carregar trilha de auditoria: ${err.message}</td></tr>`;
+                    }
+                }
+            } finally {
+                if (notificar) {
+                    setTimeout(() => {
+                        if (btn) btn.disabled = false;
+                        if (icon) icon.style.animation = '';
+                        if (label) label.textContent = 'Atualizar Trilha';
+                    }, 400);
+                }
+            }
+        }
+
+        function filtrarPorModulo(modulo) {
+            const select = document.getElementById('select-modulo');
+            if (select) select.value = modulo;
             filtrarLogs();
         }
 
         function filtrarLogs() {
-            const textoBusca = (document.getElementById('filtro-busca').value || '').toLowerCase();
+            const textoBusca = (document.getElementById('filtro-busca').value || '').toLowerCase().trim();
+            const selectModulo = document.getElementById('select-modulo');
+            const moduloFiltro = selectModulo ? selectModulo.value.toUpperCase() : 'TODOS';
             const opFiltro = (document.getElementById('select-operacao').value || '').toUpperCase();
 
+            // Mostra ou esconde botão "Limpar" quando há filtros ativos
+            const btnLimpar = document.getElementById('btn-limpar-filtros');
+            if (btnLimpar) {
+                const temFiltroAtivo = textoBusca.length > 0 || moduloFiltro !== 'TODOS' || opFiltro !== '';
+                btnLimpar.style.display = temFiltroAtivo ? 'inline-flex' : 'none';
+            }
+
             const filtrados = logsCarregados.filter(l => {
-                const bateModulo = moduloFiltroAtual === 'TODOS' || (l.modulo && l.modulo.toUpperCase().includes(moduloFiltroAtual));
+                const bateModulo = moduloFiltro === 'TODOS' || (l.modulo && l.modulo.toUpperCase().includes(moduloFiltro));
                 const bateOperacao = !opFiltro || (l.operacao && l.operacao.toUpperCase().includes(opFiltro));
                 const bateTexto = !textoBusca ||
                     (l.detalhes && l.detalhes.toLowerCase().includes(textoBusca)) ||
@@ -392,6 +518,19 @@
             });
 
             renderizarTabela(filtrados);
+        }
+
+        function limparFiltros() {
+            const campoBusca = document.getElementById('filtro-busca');
+            if (campoBusca) campoBusca.value = '';
+
+            const selectModulo = document.getElementById('select-modulo');
+            if (selectModulo) selectModulo.value = 'TODOS';
+
+            const selectOperacao = document.getElementById('select-operacao');
+            if (selectOperacao) selectOperacao.value = '';
+
+            filtrarLogs();
         }
 
         function renderizarTabela(logs) {

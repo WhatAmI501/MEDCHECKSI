@@ -134,10 +134,16 @@ public class ClinicaService {
         triagem.concluirTriagem("Classificado no cadastro como " + cor.getRotulo());
         dataStore.salvarTriagem(triagem);
 
-        AtendimentoMedico atendimento = new AtendimentoMedico(dataStore.gerarProximoIdAtendimento(), triagemId, pacienteId);
-        dataStore.salvarAtendimento(atendimento);
-        dataStore.registrarLog(new LogAuditoria(null, pacienteId, pacienteId, "ATENDIMENTO", "INSERCAO",
-                "Paciente enfileirado na Fila Priorizada com prioridade " + cor.name(), "127.0.0.1"));
+        // Não permitir o registro do mesmo paciente na fila enquanto ele já estiver lá [RF021]
+        boolean jaNaFila = dataStore.listarTodosAtendimentos().stream()
+                .anyMatch(a -> Objects.equals(a.getPacienteId(), pacienteId) &&
+                        (a.getStatus() == StatusAtendimento.AGUARDANDO || a.getStatus() == StatusAtendimento.EM_ATENDIMENTO));
+        if (!jaNaFila) {
+            AtendimentoMedico atendimento = new AtendimentoMedico(dataStore.gerarProximoIdAtendimento(), triagemId, pacienteId);
+            dataStore.salvarAtendimento(atendimento);
+            dataStore.registrarLog(new LogAuditoria(null, pacienteId, pacienteId, "ATENDIMENTO", "INSERCAO",
+                    "Paciente enfileirado na Fila Priorizada com prioridade " + cor.name(), "127.0.0.1"));
+        }
     }
 
     public Triagem realizarTriagemEClassificacao(Integer pacienteId, String queixa, String local,
@@ -183,8 +189,17 @@ public class ClinicaService {
             
             // Se for Laranja ou Amarelo, enfileira automaticamente para teleatendimento médico [RF021 / RF007]
             if (classificacao.isPrioridadeTeleconsulta()) {
-                AtendimentoMedico atendimento = new AtendimentoMedico(dataStore.gerarProximoIdAtendimento(), triagem.getId(), pacienteId);
-                dataStore.salvarAtendimento(atendimento);
+                // Não permite o registro do mesmo paciente na fila enquanto ele já estiver lá [RF021]
+                boolean jaNaFila = dataStore.listarTodosAtendimentos().stream()
+                        .anyMatch(a -> Objects.equals(a.getPacienteId(), pacienteId) &&
+                                (a.getStatus() == StatusAtendimento.AGUARDANDO || a.getStatus() == StatusAtendimento.EM_ATENDIMENTO));
+
+                if (!jaNaFila) {
+                    AtendimentoMedico atendimento = new AtendimentoMedico(dataStore.gerarProximoIdAtendimento(), triagem.getId(), pacienteId);
+                    dataStore.salvarAtendimento(atendimento);
+                    dataStore.registrarLog(new LogAuditoria(null, pacienteId, pacienteId, "ATENDIMENTO", "INSERCAO",
+                            "Paciente enfileirado na Fila Priorizada com prioridade " + classificacao.getCorManchester().name(), "127.0.0.1"));
+                }
             }
         }
 
@@ -196,9 +211,10 @@ public class ClinicaService {
     /**
      * Fila de Espera Inteligente ordenada por prioridade do Protocolo de Manchester [RF021].
      * Casos LARANJA têm precedência estrita sobre AMARELO.
+     * Não permite o mesmo paciente duas vezes na fila ativa.
      */
     public List<Map<String, Object>> obterFilaPriorizadaTeleatendimento() {
-        return dataStore.listarTodosAtendimentos().stream()
+        List<Map<String, Object>> filaOrdenada = dataStore.listarTodosAtendimentos().stream()
                 .filter(a -> a.getStatus() == StatusAtendimento.AGUARDANDO || a.getStatus() == StatusAtendimento.EM_ATENDIMENTO)
                 .map(a -> {
                     Triagem t = dataStore.buscarTriagemPorId(a.getTriagemId());
@@ -226,6 +242,49 @@ public class ClinicaService {
                 .sorted(Comparator.<Map<String, Object>>comparingInt(m -> (int) m.get("prioridadeOrdem"))
                         .thenComparingInt(m -> (int) m.get("atendimentoId")))
                 .collect(Collectors.toList());
+
+        // Deduplicação estrita: não permite o mesmo paciente duas vezes na fila
+        Set<Integer> pacientesVistos = new HashSet<>();
+        List<Map<String, Object>> filaSemDuplicatas = new ArrayList<>();
+        for (Map<String, Object> item : filaOrdenada) {
+            Integer pacId = (Integer) item.get("pacienteId");
+            if (pacId != null && pacientesVistos.add(pacId)) {
+                filaSemDuplicatas.add(item);
+            }
+        }
+        return filaSemDuplicatas;
+    }
+
+    /**
+     * Conclui o atendimento médico, removendo-o da fila ativa [RF021].
+     */
+    public boolean concluirAtendimento(Integer atendimentoId, String avaliacao, String conduta) {
+        if (atendimentoId == null) return false;
+        AtendimentoMedico a = dataStore.buscarAtendimentoPorId(atendimentoId);
+        if (a != null) {
+            a.finalizarAtendimento(
+                avaliacao != null ? avaliacao : "Consulta médica concluída e registrada",
+                conduta != null ? conduta : "Orientações e conduta prestadas"
+            );
+            dataStore.salvarAtendimento(a);
+
+            // Finaliza também quaisquer outros atendimentos em aberto do mesmo paciente para evitar reaparecimento
+            Integer pacId = a.getPacienteId();
+            if (pacId != null) {
+                for (AtendimentoMedico outro : dataStore.listarTodosAtendimentos()) {
+                    if (Objects.equals(outro.getPacienteId(), pacId) &&
+                        (outro.getStatus() == StatusAtendimento.AGUARDANDO || outro.getStatus() == StatusAtendimento.EM_ATENDIMENTO)) {
+                        outro.finalizarAtendimento(
+                            avaliacao != null ? avaliacao : "Consulta médica concluída e registrada",
+                            conduta != null ? conduta : "Orientações e conduta prestadas"
+                        );
+                        dataStore.salvarAtendimento(outro);
+                    }
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -267,11 +326,10 @@ public class ClinicaService {
             contagemPorCor.put(cor.name(), 0L);
         }
 
-        for (Triagem t : todas) {
-            ClassificacaoRisco c = t.getClassificacaoRisco();
-            if (c == null) c = dataStore.buscarClassificacaoPorTriagem(t.getId());
-            if (c != null) {
-                String cor = c.getCorManchester().name();
+        // Distribuição calculada em tempo real com base na fila ativa de atendimento
+        for (Map<String, Object> item : obterFilaPriorizadaTeleatendimento()) {
+            String cor = (String) item.get("corManchester");
+            if (cor != null) {
                 contagemPorCor.put(cor, contagemPorCor.getOrDefault(cor, 0L) + 1);
             }
         }

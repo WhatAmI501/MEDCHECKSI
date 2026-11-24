@@ -768,62 +768,8 @@
                         </a>
                     </div>
 
-                    <div class="grid grid-cols-3">
-                        <div class="quick-alert-item alert-critico">
-                            <div style="color: #ef4444; flex-shrink: 0; margin-top: 2px;">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polygon
-                                        points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" />
-                                    <line x1="12" y1="8" x2="12" y2="12" />
-                                    <line x1="12" y1="16" x2="12.01" y2="16" />
-                                </svg>
-                            </div>
-                            <div class="quick-alert-content">
-                                <h4>Protocolo SAMU 192 Acionado</h4>
-                                <p>Paciente triado com Dispneia Aguda e Spo2 87% classificado como
-                                    <strong>VERMELHO</strong> com despacho prioritário.
-                                </p>
-                                <div class="quick-alert-time tabular-nums">Atendimento imediato • Interrupção segura
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="quick-alert-item alert-alerta">
-                            <div style="color: #f97316; flex-shrink: 0; margin-top: 2px;">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10" />
-                                    <line x1="12" y1="8" x2="12" y2="12" />
-                                    <line x1="12" y1="16" x2="12.01" y2="16" />
-                                </svg>
-                            </div>
-                            <div class="quick-alert-content">
-                                <h4>Bloqueio Preventivo Anti-Alergia</h4>
-                                <p>Tentativa de prescrição de Dipirona para paciente alérgico bloqueada pelo Guardrail
-                                    de Segurança.</p>
-                                <div class="quick-alert-time tabular-nums">Intervenção automática gravada na auditoria
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="quick-alert-item alert-sucesso">
-                            <div style="color: #10b981; flex-shrink: 0; margin-top: 2px;">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                                    <polyline points="22 4 12 14.01 9 11.01" />
-                                </svg>
-                            </div>
-                            <div class="quick-alert-content">
-                                <h4>Plantão Médico & Fila Operacional</h4>
-                                <p>Dr. Roberto Silva com sessão ativa (CRM/AL 14892). Tempo de resposta dos médicos está
-                                    <strong>35% mais rápido</strong>.
-                                </p>
-                                <div class="quick-alert-time tabular-nums">SLA de espera cumprido em 100% dos casos
-                                </div>
-                            </div>
-                        </div>
+                    <div class="grid grid-cols-3" id="container-alertas-rapidos">
+                        <!-- Alertas Dinâmicos Carregados via JavaScript -->
                     </div>
                 </div>
             </main>
@@ -836,30 +782,325 @@
     </div>
 
     <script>
+        function formatarHoraRelativa(timestamp) {
+            if (!timestamp) return 'Recente';
+            const agora = Date.now();
+            const dataObj = new Date(timestamp);
+            const diff = Math.floor((agora - dataObj.getTime()) / 1000);
+            if (diff < 60) return 'Há instantes • Ação recente';
+            const mins = Math.floor(diff / 60);
+            if (mins < 60) return `Há ${mins} min • Ação recente`;
+            const horas = Math.floor(mins / 60);
+            if (horas < 24) return `Hoje às ${dataObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+            return `${dataObj.toLocaleDateString([], { day: '2-digit', month: '2-digit' })}`;
+        }
+
+        function obterAlertasRapidos() {
+            let lista = [];
+
+            // 1. Notificações diretas registradas no painel
+            try {
+                const painelLogs = JSON.parse(localStorage.getItem('medcheck_notificacoes_painel') || '[]');
+                if (Array.isArray(painelLogs)) {
+                    lista.push(...painelLogs);
+                }
+            } catch (e) { }
+
+            // 2. Pacientes atendidos na Fila Médica
+            try {
+                const concluidos = JSON.parse(localStorage.getItem('medcheck_atendimentos_concluidos') || '[]');
+                if (Array.isArray(concluidos)) {
+                    concluidos.forEach(c => {
+                        const jaConsta = lista.some(item => item.id === 'atend_' + c.atendimentoId || (item.titulo && item.titulo.includes(c.pacienteNome)));
+                        if (!jaConsta && c.pacienteNome) {
+                            lista.push({
+                                id: 'atend_' + (c.atendimentoId || Date.now()),
+                                tipo: 'atendimento',
+                                classe: 'alert-sucesso',
+                                corIcone: '#10b981',
+                                icone: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>`,
+                                titulo: `Atendimento Concluído — ${c.pacienteNome}`,
+                                descricao: `Consulta médica finalizada e registrada no prontuário. Alta concedida da fila de espera.`,
+                                tempo: formatarHoraRelativa(c.dataHora) + ' • Teleatendimento concluído',
+                                timestamp: c.dataHora ? new Date(c.dataHora).getTime() : Date.now()
+                            });
+                        }
+                    });
+                }
+            } catch (e) { }
+
+            // 3. Prescrições emitidas no módulo de Receita
+            try {
+                const prescricoes = JSON.parse(localStorage.getItem('medcheck_prescricoes_emitidas') || '[]');
+                if (Array.isArray(prescricoes)) {
+                    prescricoes.forEach(p => {
+                        const jaConsta = lista.some(item => item.id === 'rec_' + p.id || item.id === 'rec_' + p.hash);
+                        if (!jaConsta && p.pacienteNome && p.itens && p.itens[0]) {
+                            const it = p.itens[0];
+                            const remedio = it.medicamento || it.nomeMedicamento || 'Medicamento';
+                            const dose = it.dosagem || '1 cp';
+                            const hashCurto = (p.hash || '').substring(0, 16);
+                            lista.push({
+                                id: 'rec_' + (p.id || p.hash || Date.now()),
+                                tipo: 'prescricao',
+                                classe: 'alert-sucesso',
+                                corIcone: '#0ea5e9',
+                                icone: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>`,
+                                titulo: `Prescrição Emitida — ${p.pacienteNome}`,
+                                descricao: `Receituário digital assinado: ${remedio} (${dose}). Código SHA-256 homologado (${hashCurto}...).`,
+                                tempo: formatarHoraRelativa(p.dataEmissao) + ' • Certificação CFM ativa',
+                                timestamp: p.dataEmissao ? new Date(p.dataEmissao).getTime() : Date.now()
+                            });
+                        }
+                    });
+                }
+            } catch (e) { }
+
+            // Ordena os eventos: mais recentes no topo
+            lista.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+            // Alertas padrão / baselines clínicos caso o sistema tenha menos de 3 ações
+            const alertasPadrao = [
+                {
+                    id: 'padrao_samu',
+                    tipo: 'critico',
+                    classe: 'alert-critico',
+                    corIcone: '#ef4444',
+                    icone: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 2 16.14 2 7.86 7.86 2" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>`,
+                    titulo: 'Protocolo SAMU 192 Acionado',
+                    descricao: 'Paciente triado com Dispneia Aguda e Spo2 87% classificado como <strong>VERMELHO</strong> com despacho prioritário.',
+                    tempo: 'Atendimento imediato • Interrupção segura',
+                    timestamp: 1000
+                },
+                {
+                    id: 'padrao_alergia',
+                    tipo: 'alerta',
+                    classe: 'alert-alerta',
+                    corIcone: '#f97316',
+                    icone: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>`,
+                    titulo: 'Bloqueio Preventivo Anti-Alergia',
+                    descricao: 'Tentativa de prescrição de Dipirona para paciente alérgico bloqueada pelo Guardrail de Segurança.',
+                    tempo: 'Intervenção automática gravada na auditoria',
+                    timestamp: 900
+                },
+                {
+                    id: 'padrao_plantao',
+                    tipo: 'sucesso',
+                    classe: 'alert-sucesso',
+                    corIcone: '#10b981',
+                    icone: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>`,
+                    titulo: 'Plantão Médico & Fila Operacional',
+                    descricao: 'Dr. Roberto Silva com sessão ativa (CRM/AL 14892). Tempo de resposta dos médicos está <strong>35% mais rápido</strong>.',
+                    tempo: 'SLA de espera cumprido em 100% dos casos',
+                    timestamp: 800
+                }
+            ];
+
+            alertasPadrao.forEach(p => {
+                if (lista.length < 3 && !lista.some(item => item.id === p.id)) {
+                    lista.push(p);
+                }
+            });
+
+            return lista.slice(0, 3);
+        }
+
+        function renderizarAlertasRapidos() {
+            const container = document.getElementById('container-alertas-rapidos');
+            if (!container) return;
+
+            const alertas = obterAlertasRapidos();
+            container.innerHTML = '';
+
+            alertas.forEach(a => {
+                const iconeSvg = a.icone || `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>`;
+                const cor = a.corIcone || '#10b981';
+
+                const div = document.createElement('div');
+                div.className = `quick-alert-item ${a.classe || 'alert-sucesso'}`;
+                div.innerHTML = `
+                    <div style="color: ${cor}; flex-shrink: 0; margin-top: 2px;">
+                        ${iconeSvg}
+                    </div>
+                    <div class="quick-alert-content">
+                        <h4>${a.titulo}</h4>
+                        <p>${a.descricao}</p>
+                        <div class="quick-alert-time tabular-nums">${a.tempo}</div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        async function obterTotalPacientesCadastrados() {
+            let pacientes = [];
+            try {
+                const res = await fetch('/api/pacientes');
+                if (res.ok) {
+                    const dados = await res.json();
+                    if (Array.isArray(dados)) pacientes = dados;
+                }
+            } catch (err) {
+                console.warn('Backend indisponível para contagem de pacientes:', err);
+            }
+
+            // Mescla com pacientes cadastrados no navegador (mesma lógica da página de pacientes)
+            try {
+                const locais = JSON.parse(localStorage.getItem('medcheck_pacientes_cadastrados') || '[]');
+                if (Array.isArray(locais)) {
+                    locais.forEach(lp => {
+                        const lpCpf = (lp.cpf || '').replace(/\D/g, '');
+                        const jaExiste = pacientes.some(p => {
+                            const pCpf = (p.cpf || '').replace(/\D/g, '');
+                            return (lpCpf && pCpf && lpCpf === pCpf) || (p.id && lp.id && String(p.id) === String(lp.id));
+                        });
+                        if (!jaExiste) {
+                            pacientes.push(lp);
+                        }
+                    });
+                }
+            } catch (e) { }
+
+            return pacientes.length;
+        }
+
         async function carregarDashboard() {
+            // 1. Consulta indicadores gerais da API
+            let totalPacientes = 0;
             try {
                 const res = await fetch('/api/dashboard');
-                const data = await res.json();
-
-                document.getElementById('stat-triagens').innerText = data.totalTriagens || 0;
-                document.getElementById('stat-pacientes').innerText = data.totalPacientes || 0;
-                document.getElementById('stat-receitas').innerText = data.totalReceitas || 0;
-                document.getElementById('stat-atendimentos').innerText = data.totalAtendimentos || 0;
-
-                const dist = data.distribuicao || {};
-                document.getElementById('count-vermelho').innerText = dist.VERMELHO || 0;
-                document.getElementById('count-laranja').innerText = dist.LARANJA || 0;
-                document.getElementById('count-amarelo').innerText = dist.AMARELO || 0;
-                document.getElementById('count-verde').innerText = dist.VERDE || 0;
-                document.getElementById('count-azul').innerText = dist.AZUL || 0;
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('stat-triagens').innerText = data.totalTriagens || 0;
+                    totalPacientes = data.totalPacientes || 0;
+                    document.getElementById('stat-receitas').innerText = data.totalReceitas || 0;
+                }
             } catch (err) {
-                console.error('Erro ao consultar indicadores:', err);
+                console.warn('Backend indisponível para dashboard:', err);
             }
+
+            // Sincroniza a contagem de pacientes cadastrados com o número real do diretório de pacientes
+            try {
+                const totalRealPacientes = await obterTotalPacientesCadastrados();
+                totalPacientes = totalRealPacientes;
+            } catch (e) {
+                console.warn('Falha ao sincronizar total real de pacientes:', e);
+            }
+            const elPacientes = document.getElementById('stat-pacientes');
+            if (elPacientes) {
+                elPacientes.innerText = totalPacientes;
+            }
+
+            // 2. Obtém a fila priorizada ativa em tempo real (considerando exclusões e conclusões)
+            let filaAtiva = [];
+            try {
+                const resFila = await fetch('/api/fila');
+                if (resFila.ok) {
+                    const dadosFila = await resFila.json();
+                    if (Array.isArray(dadosFila)) filaAtiva = dadosFila;
+                }
+            } catch (e) { }
+
+            // Se não veio da API ou se temos fila persistida no navegador
+            if (filaAtiva.length === 0) {
+                try {
+                    const salvaRaw = localStorage.getItem('medcheck_fila_persistida');
+                    if (salvaRaw !== null) {
+                        const salva = JSON.parse(salvaRaw);
+                        if (Array.isArray(salva)) filaAtiva = salva;
+                    } else {
+                        filaAtiva = [
+                            { atendimentoId: 1, corManchester: 'LARANJA' },
+                            { atendimentoId: 2, corManchester: 'AMARELO' }
+                        ];
+                    }
+                } catch (e) {
+                    filaAtiva = [];
+                }
+            }
+
+            // Remove da fila qualquer paciente que já tenha sido concluído
+            try {
+                const concluidos = JSON.parse(localStorage.getItem('medcheck_atendimentos_concluidos') || '[]');
+                if (Array.isArray(concluidos) && concluidos.length > 0) {
+                    const idsConcluidos = new Set(concluidos.map(c => String(c.atendimentoId || c.id)).filter(Boolean));
+                    const nomesConcluidos = new Set(concluidos.map(c => (c.pacienteNome || c.nome || '').trim().toLowerCase()).filter(Boolean));
+                    const cpfsConcluidos = new Set(concluidos.map(c => (c.cpf || '').replace(/\D/g, '')).filter(Boolean));
+
+                    filaAtiva = filaAtiva.filter(item => {
+                        if (item.atendimentoId && idsConcluidos.has(String(item.atendimentoId))) return false;
+                        if (item.id && idsConcluidos.has(String(item.id))) return false;
+                        if (item.pacienteNome && nomesConcluidos.has(item.pacienteNome.trim().toLowerCase())) return false;
+                        const cpfLimpo = (item.cpf || '').replace(/\D/g, '');
+                        if (cpfLimpo && cpfsConcluidos.has(cpfLimpo)) return false;
+                        return true;
+                    });
+                }
+            } catch (e) { }
+
+            // 3. Atualiza os 5 cards de Manchester com a situação exata da fila priorizada
+            const distribuicao = {
+                VERMELHO: 0,
+                LARANJA: 0,
+                AMARELO: 0,
+                VERDE: 0,
+                AZUL: 0
+            };
+
+            filaAtiva.forEach(item => {
+                const cor = (item.corManchester || 'AZUL').toUpperCase();
+                if (distribuicao[cor] !== undefined) {
+                    distribuicao[cor]++;
+                }
+            });
+
+            document.getElementById('count-vermelho').innerText = distribuicao.VERMELHO;
+            document.getElementById('count-laranja').innerText = distribuicao.LARANJA;
+            document.getElementById('count-amarelo').innerText = distribuicao.AMARELO;
+            document.getElementById('count-verde').innerText = distribuicao.VERDE;
+            document.getElementById('count-azul').innerText = distribuicao.AZUL;
+
+            // 4. Atualiza "Consultas em Andamento" com o total de pacientes na fila ativa
+            const elAtend = document.getElementById('stat-atendimentos');
+            if (elAtend) {
+                elAtend.innerText = filaAtiva.length;
+            }
+
+            // Sincroniza estatísticas de receitas com dados locais se presentes
+            try {
+                const prescricoes = JSON.parse(localStorage.getItem('medcheck_prescricoes_emitidas') || '[]');
+                if (prescricoes.length > 0) {
+                    const elRec = document.getElementById('stat-receitas');
+                    if (elRec) {
+                        const atualRec = parseInt(elRec.innerText || '0', 10);
+                        if (atualRec < prescricoes.length) elRec.innerText = prescricoes.length;
+                    }
+                }
+            } catch (e) { }
         }
 
         window.onload = () => {
+            renderizarAlertasRapidos();
             carregarDashboard();
         };
+
+        // Sincronização em tempo real quando ações ocorrem em outras abas
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'medcheck_atendimentos_concluidos' ||
+                e.key === 'medcheck_fila_persistida' ||
+                e.key === 'medcheck_novos_pacientes_fila' ||
+                e.key === 'medcheck_pacientes_cadastrados' ||
+                e.key === 'medcheck_prescricoes_emitidas' ||
+                e.key === 'medcheck_notificacoes_painel') {
+                renderizarAlertasRapidos();
+                carregarDashboard();
+            }
+        });
+
+        // Recalcula indicadores ao voltar o foco para a página
+        window.addEventListener('focus', () => {
+            carregarDashboard();
+        });
     </script>
 </body>
 

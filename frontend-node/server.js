@@ -23,6 +23,35 @@ const MIME_TYPES = {
     '.svg': 'image/svg+xml'
 };
 
+// Validação estrita de duração dos sintomas [RF028 / Chat IA]
+function validarRespostaDuracao(resposta) {
+    if (!resposta || typeof resposta !== 'string') return false;
+    const limpo = resposta
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, ''); // Remove acentos (há -> ha, manhã -> manha)
+
+    // 1. Sugestões textuais pré-definidas (case e acento insensíveis)
+    const sugestoesValidas = [
+        '30 minutos',
+        '2 horas',
+        'hoje pela manha',
+        'desde ontem',
+        'desde a semana passada',
+        'desde semana passada'
+    ];
+    if (sugestoesValidas.includes(limpo)) {
+        return true;
+    }
+
+    // 2. Padrões numéricos: "X minutos", "Há X minutos", "X horas", "Há X horas", "X dias", "Há X dias", "X semanas", "Há X semanas"
+    // Case-insensitive e sem exigir acento no "Há" (aceita "ha" ou "há", ou sem "ha/há")
+    // X sendo qualquer número (ex: 1, 10, 45, 1.5, 2,5) e aceitando singular ou plural
+    const padraoTempo = /^(?:ha\s+)?\d+(?:[.,]\d+)?\s*(?:minutos?|horas?|dias?|semanas?)$/;
+    return padraoTempo.test(limpo);
+}
+
 const server = http.createServer(async (req, res) => {
     // Adicionar CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -72,21 +101,59 @@ const server = http.createServer(async (req, res) => {
                         proximoPasso = 2;
                         break;
                     case 2:
+                        // Validação estrita de intensidade: número de 1 a 10 ou leve, moderada/moderado, intensa/intenso (case-insensitive)
+                        const msgLimpa = message.trim().toLowerCase();
+                        const validaNumero = /\b(?:10|[1-9])\b/.test(msgLimpa);
+                        const validaPalavra = /\b(leve|moderada|moderado|intensa|intenso)\b/i.test(msgLimpa);
+
+                        if (!validaNumero && !validaPalavra) {
+                            res.writeHead(200, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({
+                                sucesso: true,
+                                resposta: 'Por favor, informe uma intensidade válida: um número de 1 a 10 ou Leve, Moderada (ou moderado), Intensa (ou intenso).',
+                                step: 2,
+                                finalizado: false,
+                                context: context,
+                                erroValidacao: true
+                            }));
+                            return;
+                        }
+
                         context.localEIntensidade = message;
-                        respostaIA = 'Há quanto tempo esse sintoma começou? A sensação é contínua ou vai e volta (intermitente)?';
+                        respostaIA = 'Há quanto tempo esse sintoma começou?';
                         proximoPasso = 3;
                         break;
                     case 3:
-                        context.duracaoEFrequencia = message;
-                        respostaIA = 'Você está sentindo algum outro sintoma associado, como febre, falta de ar, tontura, suor frio ou náuseas?';
+                        // Validação estrita de duração dos sintomas: sugestões ou "Há X minutos", "X minutos", "Há X horas", "X horas", "Há X dias", "X dias", "Há X semanas", "X semanas"
+                        if (!validarRespostaDuracao(message)) {
+                            res.writeHead(200, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({
+                                sucesso: true,
+                                resposta: 'Desculpe, não entendi. Por favor, informe a duração de um jeito mais claro ou utilize uma das sugestões.',
+                                step: 3,
+                                finalizado: false,
+                                context: context,
+                                erroValidacao: true
+                            }));
+                            return;
+                        }
+
+                        context.duracao = message;
+                        respostaIA = 'A sensação é contínua ou vai e volta (intermitente)?';
                         proximoPasso = 4;
                         break;
                     case 4:
-                        context.sintomasAssociados = message;
-                        respostaIA = 'Perfeito. Para refinarmos a classificação clínica de risco, você possui em mãos aparelhos para medir seus sinais vitais (termômetro, oxímetro ou aparelho de pressão)? Se sim, pode me informar os valores ou confirmar para concluir a triagem.';
+                        context.frequencia = message;
+                        context.duracaoEFrequencia = `${context.duracao || ''} (Frequência: ${message})`;
+                        respostaIA = 'Você está sentindo algum outro sintoma associado, como febre, falta de ar, tontura, suor frio ou náuseas?';
                         proximoPasso = 5;
                         break;
                     case 5:
+                        context.sintomasAssociados = message;
+                        respostaIA = 'Perfeito. Para refinarmos a classificação clínica de risco, você possui em mãos aparelhos para medir seus sinais vitais (termômetro, oxímetro ou aparelho de pressão)? Se sim, pode me informar os valores ou confirmar para concluir a triagem.';
+                        proximoPasso = 6;
+                        break;
+                    case 6:
                     default:
                         context.sinaisVitaisInformados = message;
                         respostaIA = 'Obrigado por todas as informações! Nossos guardrails clínicos compilaram seus relatos em um Resumo Estruturado e estão submetendo os dados ao Motor Clínico do Protocolo de Manchester para determinar seu nível de risco.';
